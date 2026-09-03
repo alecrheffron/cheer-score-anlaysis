@@ -117,6 +117,55 @@ def build_division_url(
 
     return f"{base_url}?{query}"
 
+def find_result_rows(html: str) -> list[dict]:
+    """Extract team result rows from a filtered Varsity results page."""
+    soup = BeautifulSoup(html, "lxml")
+
+    results = []
+
+    for row in soup.select("table.results-varsity tbody tr"):
+        cells = row.find_all("td")
+
+        if len(cells) < 7:
+            continue
+
+        rank = cells[0].get_text(" ", strip=True)
+
+        program_cell = cells[2]
+
+        program_tag = program_cell.select_one("div.text")
+        team_tag = program_cell.select_one("div.sub-text")
+
+        program_name = (
+            program_tag.get_text(" ", strip=True)
+            if program_tag
+            else ""
+        )
+
+        team_name = (
+            team_tag.get_text(" ", strip=True)
+            if team_tag
+            else ""
+        )
+
+        raw_score = cells[3].get_text(" ", strip=True)
+        deductions = cells[4].get_text(" ", strip=True)
+        performance_score = cells[5].get_text(" ", strip=True)
+        event_score = cells[6].get_text(" ", strip=True)
+
+        results.append(
+            {
+                "rank": rank,
+                "program_name": program_name,
+                "team_name": team_name,
+                "raw_score": raw_score,
+                "deductions": deductions,
+                "performance_score": performance_score,
+                "event_score": event_score,
+            }
+        )
+
+    return results
 
 if __name__ == "__main__":
     html = fetch_event_page(EVENT_URL)
@@ -147,6 +196,7 @@ if __name__ == "__main__":
 
     division_html = fetch_event_page(division_url)
     division_breakdowns = find_score_breakdowns(division_html)
+    results = find_result_rows(division_html)
 
     print(f"\nTesting: {test_division}")
     print(f"Found {len(division_breakdowns)} score breakdown(s)")
@@ -154,3 +204,15 @@ if __name__ == "__main__":
     for breakdown in division_breakdowns:
         print(breakdown["division_round"])
         print(breakdown["pdf_url"])
+
+    print(f"\nFound {len(results)} team result rows")
+
+    for result in results:
+        print()
+        print(f"Rank: {result['rank']}")
+        print(f"Program: {result['program_name']}")
+        print(f"Team: {result['team_name']}")
+        print(f"RS: {result['raw_score']}")
+        print(f"DED: {result['deductions']}")
+        print(f"PS: {result['performance_score']}")
+        print(f"ES: {result['event_score']}")
