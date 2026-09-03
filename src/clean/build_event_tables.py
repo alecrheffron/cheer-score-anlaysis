@@ -4,6 +4,7 @@ import pandas as pd
 
 from clean.parse_divisions import parse_division_name
 
+from clean.build_teams import make_team_id
 
 PROCESSED_DIR = Path("data/processed")
 
@@ -11,6 +12,7 @@ PROCESSED_DIR = Path("data/processed")
 PERFORMANCE_COLUMNS = [
     "competition_id",
     "division_id",
+    "team_id",
     "round",
     "program_name",
     "team_name",
@@ -67,6 +69,14 @@ def build_performances_table(
         lambda value: parse_division_name(
             value
         )["division_id"]
+    )
+
+    df["team_id"] = df.apply(
+        lambda row: make_team_id(
+            row["program_name"],
+            row["team_name"],
+        ),
+        axis=1,
     )
 
     numeric_columns = [

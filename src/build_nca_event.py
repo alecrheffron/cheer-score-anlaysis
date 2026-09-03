@@ -14,6 +14,10 @@ from scrape.scrape_level3_event import (
     scrape_level3_event,
 )
 
+from clean.build_teams import (
+    build_teams_table,
+    save_teams_table,
+)
 
 COMPETITION_ID = (
     "nca_all_star_nationals_2026"
@@ -95,6 +99,17 @@ def main() -> None:
         )
     )
 
+    teams = build_teams_table(
+    merged_records
+    )
+
+    teams_output_path = (
+        save_teams_table(
+            teams,
+            COMPETITION_ID,
+        )
+    )
+
     print()
     print("=" * 80)
     print("PERFORMANCES TABLE")
@@ -156,6 +171,24 @@ def main() -> None:
         competition
     )
 
+    print()
+    print("=" * 80)
+    print("TEAMS TABLE")
+    print("=" * 80)
+
+    print(
+        f"Rows:  {len(teams)}"
+    )
+
+    print(
+        f"Saved: {teams_output_path}"
+    )
+
+    print()
+
+    print(
+        teams.head()
+    )
 
 if __name__ == "__main__":
     main()
