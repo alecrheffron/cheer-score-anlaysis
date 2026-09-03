@@ -167,45 +167,47 @@ def find_result_rows(html: str) -> list[dict]:
 
     return results
 
-if __name__ == "__main__":
-    html = fetch_event_page(EVENT_URL)
+def build_view_all_url(
+    base_url: str,
+    division: str,
+    round_name: str = "Finals",
+) -> str:
+    """Build a Varsity View All results URL for one division and round."""
+    facets = {
+        "class": "Cheer",
+        "division": division,
+        "roundName": round_name,
+    }
 
-    save_html(
-        html,
-        "nca_2026_results.html",
+    query = urlencode(
+        {
+            "facets": json.dumps(
+                facets,
+                separators=(",", ":"),
+            )
+        }
     )
 
-    divisions = find_divisions(html)
+    return f"{base_url}/view-all?{query}"
 
-    level_3_divisions = [
-        division
-        for division in divisions
-        if division.startswith("L3 ")
-    ]
-
-    print(f"Downloaded {len(html):,} characters")
-    print(f"Found {len(divisions)} total divisions")
-    print(f"Found {len(level_3_divisions)} Level 3 divisions")
-
+if __name__ == "__main__":
     test_division = "L3 Junior - D2 - Small - A"
 
-    division_url = build_division_url(
+    view_all_url = build_view_all_url(
         EVENT_URL,
         test_division,
     )
 
-    division_html = fetch_event_page(division_url)
-    division_breakdowns = find_score_breakdowns(division_html)
-    results = find_result_rows(division_html)
+    view_all_html = fetch_event_page(
+        view_all_url
+    )
 
-    print(f"\nTesting: {test_division}")
-    print(f"Found {len(division_breakdowns)} score breakdown(s)")
+    results = find_result_rows(
+        view_all_html
+    )
 
-    for breakdown in division_breakdowns:
-        print(breakdown["division_round"])
-        print(breakdown["pdf_url"])
-
-    print(f"\nFound {len(results)} team result rows")
+    print(f"Testing View All: {test_division}")
+    print(f"Found {len(results)} team result rows")
 
     for result in results:
         print()
