@@ -1,11 +1,11 @@
-from fetch_event import (
+from scrape.fetch_event import (
     EVENT_URL,
     build_view_all_url,
     fetch_event_page,
     find_result_rows,
 )
 
-from parse_score_pdf import parse_score_pdf
+from scrape.parse_score_pdf import parse_score_pdf
 
 
 DIVISION = "L3 Youth - Flex - Small"

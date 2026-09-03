@@ -2,7 +2,12 @@ import re
 import time
 from pathlib import Path
 
-from fetch_event import (
+from clean.build_event_tables import (
+    build_performances_table,
+    save_performances_table,
+)
+
+from scrape.fetch_event import (
     EVENT_URL,
     build_division_url,
     build_view_all_url,
@@ -13,13 +18,14 @@ from fetch_event import (
     find_score_breakdowns,
 )
 
-from join_scores import (
+from scrape.join_scores import (
     build_result_lookup,
     join_score_records,
 )
 
-from parse_score_pdf import parse_score_pdf
-
+from scrape.parse_score_pdf import (
+    parse_score_pdf,
+)
 
 REQUEST_DELAY = 0.5
 
@@ -478,4 +484,15 @@ def scrape_level3_event() -> tuple[
 
 
 if __name__ == "__main__":
-    scrape_level3_event()
+    merged_records, unmatched_records = (
+        scrape_level3_event()
+    )
+
+    print()
+    print("=" * 80)
+    print("MERGED RECORD SAMPLE")
+    print("=" * 80)
+
+    print(
+        merged_records[0]
+    )
