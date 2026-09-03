@@ -4,11 +4,13 @@ import pandas as pd
 
 from clean.parse_divisions import parse_division_name
 
+
 PROCESSED_DIR = Path("data/processed")
+
 
 PERFORMANCE_COLUMNS = [
     "competition_id",
-    "division",
+    "division_id",
     "round",
     "program_name",
     "team_name",
@@ -61,6 +63,12 @@ def build_performances_table(
         competition_id,
     )
 
+    df["division_id"] = df["division"].apply(
+        lambda value: parse_division_name(
+            value
+        )["division_id"]
+    )
+
     numeric_columns = [
         "rank",
         "raw_score",
@@ -81,17 +89,20 @@ def build_performances_table(
 
     return df
 
+
 def build_divisions_table(
-    performances: pd.DataFrame,
+    merged_records: list[dict],
 ) -> pd.DataFrame:
     """
-    Build one row per unique division from the performances table.
+    Build one row per unique division from
+    validated merged score records.
     """
 
-    unique_divisions = (
-        performances["division"]
-        .drop_duplicates()
-        .tolist()
+    unique_divisions = list(
+        dict.fromkeys(
+            record["division"]
+            for record in merged_records
+        )
     )
 
     parsed_divisions = [
@@ -104,6 +115,32 @@ def build_divisions_table(
     )
 
     return divisions
+
+
+def save_performances_table(
+    df: pd.DataFrame,
+    competition_id: str,
+) -> Path:
+    """
+    Save one competition's performances to processed data.
+    """
+
+    PROCESSED_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    output_path = (
+        PROCESSED_DIR
+        / f"{competition_id}_performances.csv"
+    )
+
+    df.to_csv(
+        output_path,
+        index=False,
+    )
+
+    return output_path
 
 
 def save_divisions_table(
@@ -122,31 +159,6 @@ def save_divisions_table(
     output_path = (
         PROCESSED_DIR
         / f"{competition_id}_divisions.csv"
-    )
-
-    df.to_csv(
-        output_path,
-        index=False,
-    )
-
-    return output_path
-
-def save_performances_table(
-    df: pd.DataFrame,
-    competition_id: str,
-) -> Path:
-    """
-    Save one competition's performances to processed data.
-    """
-
-    PROCESSED_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    output_path = (
-        PROCESSED_DIR
-        / f"{competition_id}_performances.csv"
     )
 
     df.to_csv(

@@ -42,7 +42,7 @@ def main() -> None:
     )
 
     divisions = build_divisions_table(
-        performances
+        merged_records
     )
 
     divisions_output_path = (
