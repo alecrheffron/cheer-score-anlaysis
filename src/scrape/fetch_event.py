@@ -191,30 +191,49 @@ def build_view_all_url(
     return f"{base_url}/view-all?{query}"
 
 if __name__ == "__main__":
-    test_division = "L3 Junior - D2 - Small - A"
+    html = fetch_event_page(EVENT_URL)
 
-    view_all_url = build_view_all_url(
-        EVENT_URL,
-        test_division,
+    divisions = find_divisions(html)
+
+    level_3_divisions = [
+        division
+        for division in divisions
+        if division.startswith("L3 ")
+    ]
+
+    print(f"Found {len(level_3_divisions)} Level 3 divisions")
+
+    print("\n" + "=" * 80)
+    print("LEVEL 3 FULL RESULTS QA CHECK")
+    print("=" * 80)
+
+    total_teams = 0
+
+    for division in level_3_divisions:
+        view_all_url = build_view_all_url(
+            EVENT_URL,
+            division,
+        )
+
+        view_all_html = fetch_event_page(
+            view_all_url
+        )
+
+        results = find_result_rows(
+            view_all_html
+        )
+
+        team_count = len(results)
+        total_teams += team_count
+
+        print(
+            f"{division} | "
+            f"{team_count} teams"
+        )
+
+    print("\n" + "=" * 80)
+    print(
+        f"TOTAL LEVEL 3 FINALISTS: "
+        f"{total_teams}"
     )
-
-    view_all_html = fetch_event_page(
-        view_all_url
-    )
-
-    results = find_result_rows(
-        view_all_html
-    )
-
-    print(f"Testing View All: {test_division}")
-    print(f"Found {len(results)} team result rows")
-
-    for result in results:
-        print()
-        print(f"Rank: {result['rank']}")
-        print(f"Program: {result['program_name']}")
-        print(f"Team: {result['team_name']}")
-        print(f"RS: {result['raw_score']}")
-        print(f"DED: {result['deductions']}")
-        print(f"PS: {result['performance_score']}")
-        print(f"ES: {result['event_score']}")
+    print("=" * 80)
