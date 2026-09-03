@@ -27,6 +27,12 @@ COMPETITION_ID = (
     "nca_all_star_nationals_2026"
 )
 
+EVENT_URL = (
+    "https://tv.varsity.com/events/"
+    "14478911-2026-nca-all-star-national-championship/"
+    "results"
+)
+
 COMPETITION_NAME = (
     "2026 NCA All-Star National Championship"
 )
@@ -48,7 +54,10 @@ LOCATION_REGION = "Southwest"
 def main() -> None:
 
     merged_records, unmatched_records = (
-        scrape_level3_event()
+        scrape_level3_event(
+            event_url=EVENT_URL,
+            competition_id=COMPETITION_ID,
+        )
     )
 
     if unmatched_records:

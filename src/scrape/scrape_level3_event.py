@@ -2,13 +2,7 @@ import re
 import time
 from pathlib import Path
 
-from clean.build_event_tables import (
-    build_performances_table,
-    save_performances_table,
-)
-
 from scrape.fetch_event import (
-    EVENT_URL,
     build_division_url,
     build_view_all_url,
     download_pdf,
@@ -27,20 +21,26 @@ from scrape.parse_score_pdf import (
     parse_score_pdf,
 )
 
+
 REQUEST_DELAY = 0.5
 
 PDF_DIR = Path("data/raw/score_breakdowns")
 
 
-def make_filename(division: str) -> str:
+def make_filename(
+    competition_id: str,
+    division: str,
+) -> str:
     """
-    Convert a division name into a safe PDF filename.
+    Convert competition and division names into
+    a safe PDF filename.
+    """
 
-    Example:
-        L3 Youth - Flex - Small
-        -> l3_youth_flex_small.pdf
-    """
-    filename = division.lower()
+    combined_name = (
+        f"{competition_id}_{division}"
+    )
+
+    filename = combined_name.lower()
 
     filename = re.sub(
         r"[^a-z0-9]+",
@@ -53,10 +53,16 @@ def make_filename(division: str) -> str:
     return f"{filename}.pdf"
 
 
-def get_level3_divisions() -> list[str]:
-    """Discover standard Level 3 divisions from the event page."""
+def get_level3_divisions(
+    event_url: str,
+) -> list[str]:
+    """
+    Discover standard Level 3 divisions
+    from one event page.
+    """
+
     html = fetch_event_page(
-        EVENT_URL
+        event_url
     )
 
     divisions = find_divisions(
@@ -81,12 +87,17 @@ def get_level3_divisions() -> list[str]:
 
 
 def get_score_pdf(
+    event_url: str,
+    competition_id: str,
     division: str,
 ) -> Path | None:
-    """Find and download the score breakdown PDF for one division."""
+    """
+    Find and download the score breakdown PDF
+    for one division.
+    """
 
     division_url = build_division_url(
-        EVENT_URL,
+        event_url,
         division,
         "Finals",
     )
@@ -108,7 +119,8 @@ def get_score_pdf(
     )
 
     filename = make_filename(
-        division
+        competition_id,
+        division,
     )
 
     output_path = (
@@ -116,8 +128,6 @@ def get_score_pdf(
         / filename
     )
 
-    # Reuse an existing downloaded PDF
-    # instead of requesting it again.
     if output_path.exists():
         return output_path
 
@@ -130,9 +140,13 @@ def get_score_pdf(
 
 
 def get_division_results(
+    event_url: str,
     division: str,
 ) -> dict:
-    """Fetch complete View All results for Prelims and Finals."""
+    """
+    Fetch complete View All results
+    for Prelims and Finals.
+    """
 
     result_lookup = {}
 
@@ -144,7 +158,7 @@ def get_division_results(
     ]:
 
         url = build_view_all_url(
-            EVENT_URL,
+            event_url,
             division,
             round_name,
         )
@@ -180,16 +194,21 @@ def get_division_results(
     }
 
 
-def scrape_level3_event() -> tuple[
+def scrape_level3_event(
+    event_url: str,
+    competition_id: str,
+) -> tuple[
     list[dict],
     list[dict],
 ]:
     """
-    Download, parse, and join all Level 3 divisions
-    for the current competition.
+    Download, parse, and join all standard
+    Level 3 divisions for one competition.
     """
 
-    divisions = get_level3_divisions()
+    divisions = get_level3_divisions(
+        event_url
+    )
 
     print(
         f"Found {len(divisions)} "
@@ -219,7 +238,9 @@ def scrape_level3_event() -> tuple[
 
         try:
             pdf_path = get_score_pdf(
-                division
+                event_url,
+                competition_id,
+                division,
             )
 
             if pdf_path is None:
@@ -252,7 +273,8 @@ def scrape_level3_event() -> tuple[
             )
 
             results_data = get_division_results(
-                division
+                event_url,
+                division,
             )
 
             merged_records, unmatched = (
@@ -480,19 +502,4 @@ def scrape_level3_event() -> tuple[
     return (
         all_merged_records,
         all_unmatched_records,
-    )
-
-
-if __name__ == "__main__":
-    merged_records, unmatched_records = (
-        scrape_level3_event()
-    )
-
-    print()
-    print("=" * 80)
-    print("MERGED RECORD SAMPLE")
-    print("=" * 80)
-
-    print(
-        merged_records[0]
     )
