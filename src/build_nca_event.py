@@ -19,6 +19,10 @@ from clean.build_teams import (
     save_teams_table,
 )
 
+from clean.validate_event_tables import (
+    validate_event_tables,
+)
+
 COMPETITION_ID = (
     "nca_all_star_nationals_2026"
 )
@@ -109,6 +113,19 @@ def main() -> None:
             COMPETITION_ID,
         )
     )
+
+    validate_event_tables(
+        performances=performances,
+        divisions=divisions,
+        competition=competition,
+        teams=teams,
+    )
+
+    print()
+    print("=" * 80)
+    print("RELATIONAL QA")
+    print("=" * 80)
+    print("All relational integrity checks passed.")
 
     print()
     print("=" * 80)
