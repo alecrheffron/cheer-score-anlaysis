@@ -191,40 +191,75 @@ def build_view_all_url(
     return f"{base_url}/view-all?{query}"
 
 if __name__ == "__main__":
-    test_division = "L3 Youth - Flex - Small"
+    html = fetch_event_page(EVENT_URL)
 
-    rounds = [
-        "Prelims",
-        "Finals",
+    divisions = find_divisions(html)
+
+    level_3_divisions = [
+        division
+        for division in divisions
+        if division.startswith("L3 ")
     ]
 
-    for round_name in rounds:
-        view_all_url = build_view_all_url(
+    print(f"Found {len(level_3_divisions)} Level 3 divisions")
+
+    print("\n" + "=" * 100)
+    print("LEVEL 3 PRELIMS / FINALS QA CHECK")
+    print("=" * 100)
+
+    total_prelims = 0
+    total_finals = 0
+
+    for division in level_3_divisions:
+        prelim_url = build_view_all_url(
             EVENT_URL,
-            test_division,
-            round_name,
+            division,
+            "Prelims",
         )
 
-        view_all_html = fetch_event_page(
-            view_all_url
+        finals_url = build_view_all_url(
+            EVENT_URL,
+            division,
+            "Finals",
         )
 
-        results = find_result_rows(
-            view_all_html
+        prelim_html = fetch_event_page(
+            prelim_url
         )
 
-        print("\n" + "=" * 80)
-        print(f"{test_division} | {round_name}")
-        print("=" * 80)
-        print(f"Found {len(results)} team result rows")
+        finals_html = fetch_event_page(
+            finals_url
+        )
 
-        for result in results:
-            print(
-                f"{result['rank']} | "
-                f"{result['program_name']} | "
-                f"{result['team_name']} | "
-                f"RS {result['raw_score']} | "
-                f"DED {result['deductions']} | "
-                f"PS {result['performance_score']} | "
-                f"ES {result['event_score']}"
-            )
+        prelim_results = find_result_rows(
+            prelim_html
+        )
+
+        finals_results = find_result_rows(
+            finals_html
+        )
+
+        prelim_count = len(prelim_results)
+        finals_count = len(finals_results)
+
+        total_prelims += prelim_count
+        total_finals += finals_count
+
+        status = (
+            "OK"
+            if prelim_count == finals_count
+            else "CHECK"
+        )
+
+        print(
+            f"{division} | "
+            f"Prelims: {prelim_count:>2} | "
+            f"Finals: {finals_count:>2} | "
+            f"{status}"
+        )
+
+    print("\n" + "=" * 100)
+    print(f"TOTAL PRELIM PERFORMANCES: {total_prelims}")
+    print(f"TOTAL FINAL PERFORMANCES:  {total_finals}")
+    print(f"TOTAL PERFORMANCES:        {total_prelims + total_finals}")
+    print("=" * 100)
