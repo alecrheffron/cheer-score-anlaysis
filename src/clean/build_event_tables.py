@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from clean.parse_divisions import parse_division_name
 
 PROCESSED_DIR = Path("data/processed")
 
@@ -80,6 +81,55 @@ def build_performances_table(
 
     return df
 
+def build_divisions_table(
+    performances: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Build one row per unique division from the performances table.
+    """
+
+    unique_divisions = (
+        performances["division"]
+        .drop_duplicates()
+        .tolist()
+    )
+
+    parsed_divisions = [
+        parse_division_name(division)
+        for division in unique_divisions
+    ]
+
+    divisions = pd.DataFrame(
+        parsed_divisions
+    )
+
+    return divisions
+
+
+def save_divisions_table(
+    df: pd.DataFrame,
+    competition_id: str,
+) -> Path:
+    """
+    Save one competition's division dimension table.
+    """
+
+    PROCESSED_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    output_path = (
+        PROCESSED_DIR
+        / f"{competition_id}_divisions.csv"
+    )
+
+    df.to_csv(
+        output_path,
+        index=False,
+    )
+
+    return output_path
 
 def save_performances_table(
     df: pd.DataFrame,

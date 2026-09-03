@@ -1,5 +1,7 @@
 from clean.build_event_tables import (
+    build_divisions_table,
     build_performances_table,
+    save_divisions_table,
     save_performances_table,
 )
 
@@ -39,6 +41,17 @@ def main() -> None:
         )
     )
 
+    divisions = build_divisions_table(
+        performances
+    )
+
+    divisions_output_path = (
+        save_divisions_table(
+            divisions,
+            COMPETITION_ID,
+        )
+    )
+
     print()
     print("=" * 80)
     print("PERFORMANCES TABLE")
@@ -60,6 +73,25 @@ def main() -> None:
 
     print(
         performances.head()
+    )
+
+    print()
+    print("=" * 80)
+    print("DIVISIONS TABLE")
+    print("=" * 80)
+
+    print(
+        f"Rows:  {len(divisions)}"
+    )
+
+    print(
+        f"Saved: {divisions_output_path}"
+    )
+
+    print()
+
+    print(
+        divisions
     )
 
 
