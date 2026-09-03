@@ -33,18 +33,35 @@ def clean_cell(value: str | None) -> str:
 
 def detect_round(page) -> str | None:
     """
-    Detect a competition round explicitly printed on a PDF page.
+    Detect the competition round from PDF page text.
 
-    Returns None when the page is a continuation page that does not
-    repeat the Prelims/Finals heading.
+    Supports standard labels such as:
+        Prelims
+        Finals
+        Round 1
+        Round 2
+        etc.
     """
-    text = page.extract_text() or ""
 
-    if re.search(r"\bPrelims\b", text, re.IGNORECASE):
+    text = page.extract_text()
+
+    if not text:
+        return None
+
+    if "Prelims" in text:
         return "Prelims"
 
-    if re.search(r"\bFinals\b", text, re.IGNORECASE):
+    if "Finals" in text:
         return "Finals"
+
+    round_match = re.search(
+        r"\bRound\s+\d+\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    if round_match:
+        return round_match.group(0).title()
 
     return None
 

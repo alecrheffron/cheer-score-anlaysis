@@ -24,30 +24,29 @@ from clean.validate_event_tables import (
 )
 
 COMPETITION_ID = (
-    "nca_all_star_nationals_2026"
+    "nca_holiday_classic_2025"
 )
 
 EVENT_URL = (
     "https://tv.varsity.com/events/"
-    "14478911-2026-nca-all-star-national-championship/"
-    "results"
+    "14478838/results"
 )
 
 COMPETITION_NAME = (
-    "2026 NCA All-Star National Championship"
+    "2025 NCA Holiday Classic"
 )
 
 SEASON = 2026
 
-START_DATE = "2026-02-27"
-END_DATE = "2026-03-01"
+START_DATE = "2025-12-14"
+END_DATE = "2025-12-14"
 
 CITY = "Dallas"
 STATE = "TX"
 
-EVENT_TIER = "National"
-EVENT_SIZE = "Very Large"
-JUDGING_POOL_TYPE = "National/Mixed"
+EVENT_TIER = "Regional"
+EVENT_SIZE = "Medium"
+JUDGING_POOL_TYPE = "Regional"
 LOCATION_REGION = "Southwest"
 
 
@@ -57,7 +56,7 @@ def main() -> None:
         scrape_level3_event(
             event_url=EVENT_URL,
             competition_id=COMPETITION_ID,
-            rounds=["Prelims", "Finals"]
+            rounds=["Round 1"]
         )
     )
 

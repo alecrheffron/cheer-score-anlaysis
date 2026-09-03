@@ -24,7 +24,9 @@ from scrape.parse_score_pdf import (
 
 REQUEST_DELAY = 0.5
 
-PDF_DIR = Path("data/raw/score_breakdowns")
+PDF_DIR = Path(
+    "data/raw/score_breakdowns"
+)
 
 
 def make_filename(
@@ -32,8 +34,8 @@ def make_filename(
     division: str,
 ) -> str:
     """
-    Convert competition and division names into
-    a safe PDF filename.
+    Convert competition and division names
+    into a safe PDF filename.
     """
 
     combined_name = (
@@ -90,72 +92,74 @@ def get_score_pdf(
     event_url: str,
     competition_id: str,
     division: str,
+    rounds: list[str],
 ) -> Path | None:
     """
-    Find and download the score breakdown PDF
-    for one division.
+    Find and download the score breakdown
+    PDF for one division.
     """
 
-    division_url = build_division_url(
-        event_url,
-        division,
-        "Finals",
-    )
+    for round_name in rounds:
 
-    html = fetch_event_page(
-        division_url
-    )
+        division_url = build_division_url(
+            event_url,
+            division,
+            round_name,
+        )
 
-    breakdowns = find_score_breakdowns(
-        html
-    )
+        html = fetch_event_page(
+            division_url
+        )
 
-    if not breakdowns:
-        return None
+        breakdowns = find_score_breakdowns(
+            html
+        )
 
-    PDF_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+        if not breakdowns:
+            continue
 
-    filename = make_filename(
-        competition_id,
-        division,
-    )
+        PDF_DIR.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
-    output_path = (
-        PDF_DIR
-        / filename
-    )
+        filename = make_filename(
+            competition_id,
+            division,
+        )
 
-    if output_path.exists():
-        return output_path
+        output_path = (
+            PDF_DIR
+            / filename
+        )
 
-    downloaded_path = download_pdf(
-        breakdowns[0]["pdf_url"],
-        f"score_breakdowns/{filename}",
-    )
+        if output_path.exists():
+            return output_path
 
-    return downloaded_path
+        downloaded_path = download_pdf(
+            breakdowns[0]["pdf_url"],
+            f"score_breakdowns/{filename}",
+        )
+
+        return downloaded_path
+
+    return None
 
 
 def get_division_results(
     event_url: str,
     division: str,
+    rounds: list[str],
 ) -> dict:
     """
     Fetch complete View All results
-    for Prelims and Finals.
+    for the supplied competition rounds.
     """
 
     result_lookup = {}
-
     round_counts = {}
 
-    for round_name in [
-        "Prelims",
-        "Finals",
-    ]:
+    for round_name in rounds:
 
         url = build_view_all_url(
             event_url,
@@ -197,13 +201,15 @@ def get_division_results(
 def scrape_level3_event(
     event_url: str,
     competition_id: str,
+    rounds: list[str],
 ) -> tuple[
     list[dict],
     list[dict],
 ]:
     """
-    Download, parse, and join all standard
-    Level 3 divisions for one competition.
+    Download, parse, and join all
+    standard Level 3 divisions
+    for one competition.
     """
 
     divisions = get_level3_divisions(
@@ -220,9 +226,7 @@ def scrape_level3_event(
     )
 
     all_merged_records = []
-
     all_unmatched_records = []
-
     division_summaries = []
 
     for index, division in enumerate(
@@ -237,10 +241,12 @@ def scrape_level3_event(
         )
 
         try:
+
             pdf_path = get_score_pdf(
                 event_url,
                 competition_id,
                 division,
+                rounds,
             )
 
             if pdf_path is None:
@@ -254,8 +260,11 @@ def scrape_level3_event(
                     {
                         "division": division,
                         "status": "NO PDF",
-                        "prelims": 0,
-                        "finals": 0,
+                        "round_counts": {
+                            round_name: 0
+                            for round_name
+                            in rounds
+                        },
                         "pdf_records": 0,
                         "merged": 0,
                         "unmatched": 0,
@@ -268,44 +277,46 @@ def scrape_level3_event(
                 REQUEST_DELAY
             )
 
-            score_records = parse_score_pdf(
-                str(pdf_path)
+            score_records = (
+                parse_score_pdf(
+                    str(pdf_path)
+                )
             )
 
-            results_data = get_division_results(
-                event_url,
-                division,
+            results_data = (
+                get_division_results(
+                    event_url,
+                    division,
+                    rounds,
+                )
             )
 
             merged_records, unmatched = (
                 join_score_records(
                     score_records,
-                    results_data["lookup"],
+                    results_data[
+                        "lookup"
+                    ],
                     division,
                 )
             )
 
-            prelim_count = (
+            round_counts = (
                 results_data[
                     "round_counts"
-                ]["Prelims"]
+                ]
             )
 
-            final_count = (
-                results_data[
-                    "round_counts"
-                ]["Finals"]
+            expected_records = sum(
+                round_counts.values()
             )
 
-            print(
-                f"  Prelims results: "
-                f"{prelim_count}"
-            )
+            for round_name in rounds:
 
-            print(
-                f"  Finals results:   "
-                f"{final_count}"
-            )
+                print(
+                    f"  {round_name} results: "
+                    f"{round_counts[round_name]}"
+                )
 
             print(
                 f"  PDF records:      "
@@ -322,15 +333,13 @@ def scrape_level3_event(
                 f"{len(unmatched)}"
             )
 
-            expected_records = (
-                prelim_count
-                + final_count
-            )
-
             is_problem = (
-                len(score_records) != expected_records
-                or len(merged_records) != expected_records
-                or len(unmatched) != 0
+                len(score_records)
+                != expected_records
+                or len(merged_records)
+                != expected_records
+                or len(unmatched)
+                != 0
             )
 
             status = (
@@ -343,8 +352,8 @@ def scrape_level3_event(
                 {
                     "division": division,
                     "status": status,
-                    "prelims": prelim_count,
-                    "finals": final_count,
+                    "round_counts":
+                        round_counts,
                     "pdf_records": len(
                         score_records
                     ),
@@ -362,9 +371,11 @@ def scrape_level3_event(
             )
 
             for record in unmatched:
+
                 all_unmatched_records.append(
                     {
-                        "division": division,
+                        "division":
+                            division,
                         **record,
                     }
                 )
@@ -381,8 +392,11 @@ def scrape_level3_event(
                 {
                     "division": division,
                     "status": "ERROR",
-                    "prelims": 0,
-                    "finals": 0,
+                    "round_counts": {
+                        round_name: 0
+                        for round_name
+                        in rounds
+                    },
                     "pdf_records": 0,
                     "merged": 0,
                     "unmatched": 0,
@@ -406,19 +420,29 @@ def scrape_level3_event(
         "=" * 80
     )
 
-    total_prelims = sum(
-        row["prelims"]
-        for row in division_summaries
-    )
+    total_round_counts = {
+        round_name: sum(
+            row[
+                "round_counts"
+            ].get(
+                round_name,
+                0,
+            )
+            for row
+            in division_summaries
+        )
+        for round_name
+        in rounds
+    }
 
-    total_finals = sum(
-        row["finals"]
-        for row in division_summaries
+    total_view_all = sum(
+        total_round_counts.values()
     )
 
     total_pdf_records = sum(
         row["pdf_records"]
-        for row in division_summaries
+        for row
+        in division_summaries
     )
 
     print(
@@ -426,19 +450,16 @@ def scrape_level3_event(
         f"{len(divisions)}"
     )
 
-    print(
-        f"Prelim results:     "
-        f"{total_prelims}"
-    )
+    for round_name in rounds:
 
-    print(
-        f"Final results:      "
-        f"{total_finals}"
-    )
+        print(
+            f"{round_name} results: "
+            f"{total_round_counts[round_name]}"
+        )
 
     print(
         f"View All total:     "
-        f"{total_prelims + total_finals}"
+        f"{total_view_all}"
     )
 
     print(
@@ -458,7 +479,8 @@ def scrape_level3_event(
 
     problem_divisions = [
         row
-        for row in division_summaries
+        for row
+        in division_summaries
         if row["status"] != "OK"
     ]
 
@@ -479,9 +501,12 @@ def scrape_level3_event(
             print(
                 f"  {row['status']} | "
                 f"{row['division']} | "
-                f"PDF {row['pdf_records']} | "
-                f"Merged {row['merged']} | "
-                f"Unmatched {row['unmatched']}"
+                f"PDF "
+                f"{row['pdf_records']} | "
+                f"Merged "
+                f"{row['merged']} | "
+                f"Unmatched "
+                f"{row['unmatched']}"
             )
 
     if all_unmatched_records:
@@ -491,10 +516,13 @@ def scrape_level3_event(
             "UNMATCHED TEAMS"
         )
 
-        for record in all_unmatched_records:
+        for record in (
+            all_unmatched_records
+        ):
 
             print(
-                f"  {record['division']} | "
+                f"  "
+                f"{record['division']} | "
                 f"{record['round']} | "
                 f"{record['team_name_raw']}"
             )
