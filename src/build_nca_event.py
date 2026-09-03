@@ -5,6 +5,11 @@ from clean.build_event_tables import (
     save_performances_table,
 )
 
+from clean.build_competition import (
+    build_competition_table,
+    save_competition_table,
+)
+
 from scrape.scrape_level3_event import (
     scrape_level3_event,
 )
@@ -13,6 +18,23 @@ from scrape.scrape_level3_event import (
 COMPETITION_ID = (
     "nca_all_star_nationals_2026"
 )
+
+COMPETITION_NAME = (
+    "2026 NCA All-Star National Championship"
+)
+
+SEASON = 2026
+
+START_DATE = "2026-02-27"
+END_DATE = "2026-03-01"
+
+CITY = "Dallas"
+STATE = "TX"
+
+EVENT_TIER = "National"
+EVENT_SIZE = "Very Large"
+JUDGING_POOL_TYPE = "National/Mixed"
+LOCATION_REGION = "Southwest"
 
 
 def main() -> None:
@@ -48,6 +70,27 @@ def main() -> None:
     divisions_output_path = (
         save_divisions_table(
             divisions,
+            COMPETITION_ID,
+        )
+    )
+
+    competition = build_competition_table(
+        competition_id=COMPETITION_ID,
+        competition_name=COMPETITION_NAME,
+        season=SEASON,
+        start_date=START_DATE,
+        end_date=END_DATE,
+        city=CITY,
+        state=STATE,
+        event_tier=EVENT_TIER,
+        event_size=EVENT_SIZE,
+        judging_pool_type=JUDGING_POOL_TYPE,
+        location_region=LOCATION_REGION,
+    )
+
+    competition_output_path = (
+        save_competition_table(
+            competition,
             COMPETITION_ID,
         )
     )
@@ -92,6 +135,25 @@ def main() -> None:
 
     print(
         divisions
+    )
+
+    print()
+    print("=" * 80)
+    print("COMPETITION TABLE")
+    print("=" * 80)
+
+    print(
+        f"Rows:  {len(competition)}"
+    )
+
+    print(
+        f"Saved: {competition_output_path}"
+    )
+
+    print()
+
+    print(
+        competition
     )
 
 
