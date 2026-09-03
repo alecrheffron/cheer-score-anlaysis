@@ -190,76 +190,41 @@ def build_view_all_url(
 
     return f"{base_url}/view-all?{query}"
 
+def download_pdf(url: str, filename: str) -> Path:
+    """Download a Varsity score breakdown PDF."""
+    response = requests.get(url, timeout=30)
+    response.raise_for_status()
+
+    output_path = Path("data/raw") / filename
+    output_path.write_bytes(response.content)
+
+    return output_path
+
 if __name__ == "__main__":
-    html = fetch_event_page(EVENT_URL)
+    test_division = "L3 Youth - Flex - Small"
 
-    divisions = find_divisions(html)
+    division_url = build_division_url(
+        EVENT_URL,
+        test_division,
+        "Finals",
+    )
 
-    level_3_divisions = [
-        division
-        for division in divisions
-        if division.startswith("L3 ")
-    ]
+    division_html = fetch_event_page(
+        division_url
+    )
 
-    print(f"Found {len(level_3_divisions)} Level 3 divisions")
+    breakdowns = find_score_breakdowns(
+        division_html
+    )
 
-    print("\n" + "=" * 100)
-    print("LEVEL 3 PRELIMS / FINALS QA CHECK")
-    print("=" * 100)
+    print(
+        f"Found {len(breakdowns)} "
+        f"score breakdown PDF(s)"
+    )
 
-    total_prelims = 0
-    total_finals = 0
+    pdf_path = download_pdf(
+        breakdowns[0]["pdf_url"],
+        "l3_youth_flex_small.pdf",
+    )
 
-    for division in level_3_divisions:
-        prelim_url = build_view_all_url(
-            EVENT_URL,
-            division,
-            "Prelims",
-        )
-
-        finals_url = build_view_all_url(
-            EVENT_URL,
-            division,
-            "Finals",
-        )
-
-        prelim_html = fetch_event_page(
-            prelim_url
-        )
-
-        finals_html = fetch_event_page(
-            finals_url
-        )
-
-        prelim_results = find_result_rows(
-            prelim_html
-        )
-
-        finals_results = find_result_rows(
-            finals_html
-        )
-
-        prelim_count = len(prelim_results)
-        finals_count = len(finals_results)
-
-        total_prelims += prelim_count
-        total_finals += finals_count
-
-        status = (
-            "OK"
-            if prelim_count == finals_count
-            else "CHECK"
-        )
-
-        print(
-            f"{division} | "
-            f"Prelims: {prelim_count:>2} | "
-            f"Finals: {finals_count:>2} | "
-            f"{status}"
-        )
-
-    print("\n" + "=" * 100)
-    print(f"TOTAL PRELIM PERFORMANCES: {total_prelims}")
-    print(f"TOTAL FINAL PERFORMANCES:  {total_finals}")
-    print(f"TOTAL PERFORMANCES:        {total_prelims + total_finals}")
-    print("=" * 100)
+    print(f"Saved PDF to: {pdf_path}")
