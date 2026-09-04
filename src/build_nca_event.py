@@ -57,7 +57,6 @@ def main() -> None:
         scrape_level3_event(
             event_url=EVENT_URL,
             competition_id=COMPETITION_ID,
-            rounds=["Prelims", "Finals"]
         )
     )
 

@@ -10,6 +10,7 @@ from scrape.fetch_event import (
     find_divisions,
     find_result_rows,
     find_score_breakdowns,
+    find_rounds,
 )
 
 from scrape.join_scores import (
@@ -57,15 +58,20 @@ def make_filename(
 
 def get_level3_divisions(
     event_url: str,
+    html: str | None = None,
 ) -> list[str]:
     """
     Discover standard Level 3 divisions
     from one event page.
+
+    If event HTML is supplied, reuse it so the
+    event page does not need to be fetched twice.
     """
 
-    html = fetch_event_page(
-        event_url
-    )
+    if html is None:
+        html = fetch_event_page(
+            event_url
+        )
 
     divisions = find_divisions(
         html
@@ -79,10 +85,11 @@ def get_level3_divisions(
     return [
         division
         for division in divisions
-        if (
-            division.startswith("L3 ")
-            and not division.startswith(
-                excluded_groups
+        if division.startswith(
+            (
+                "L3 Youth",
+                "L3 Junior",
+                "L3 Senior",
             )
         )
     ]
@@ -93,11 +100,13 @@ def get_score_pdf(
     competition_id: str,
     division: str,
     rounds: list[str],
-) -> Path | None:
+) -> list[Path]:
     """
-    Find and download the score breakdown
-    PDF for one division.
+    Find and download all unique score breakdown
+    PDFs available for one division.
     """
+
+    pdf_urls = []
 
     for round_name in rounds:
 
@@ -118,15 +127,45 @@ def get_score_pdf(
         if not breakdowns:
             continue
 
-        PDF_DIR.mkdir(
-            parents=True,
-            exist_ok=True,
+        pdf_url = breakdowns[0]["pdf_url"]
+
+        if pdf_url not in pdf_urls:
+            pdf_urls.append(
+                pdf_url
+            )
+
+        time.sleep(
+            REQUEST_DELAY
         )
 
-        filename = make_filename(
-            competition_id,
-            division,
-        )
+    if not pdf_urls:
+        return []
+
+    PDF_DIR.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    pdf_paths = []
+
+    for index, pdf_url in enumerate(
+        pdf_urls,
+        start=1,
+    ):
+
+        if len(pdf_urls) == 1:
+
+            filename = make_filename(
+                competition_id,
+                division,
+            )
+
+        else:
+
+            filename = make_filename(
+                competition_id,
+                f"{division}_part_{index}",
+            )
 
         output_path = (
             PDF_DIR
@@ -134,16 +173,27 @@ def get_score_pdf(
         )
 
         if output_path.exists():
-            return output_path
+
+            pdf_paths.append(
+                output_path
+            )
+
+            continue
 
         downloaded_path = download_pdf(
-            breakdowns[0]["pdf_url"],
+            pdf_url,
             f"score_breakdowns/{filename}",
         )
 
-        return downloaded_path
+        pdf_paths.append(
+            downloaded_path
+        )
 
-    return None
+        time.sleep(
+            REQUEST_DELAY
+        )
+
+    return pdf_paths
 
 
 def get_division_results(
@@ -201,10 +251,10 @@ def get_division_results(
 def scrape_level3_event(
     event_url: str,
     competition_id: str,
-    rounds: list[str],
 ) -> tuple[
     list[dict],
     list[dict],
+    dict,
 ]:
     """
     Download, parse, and join all
@@ -212,13 +262,33 @@ def scrape_level3_event(
     for one competition.
     """
 
-    divisions = get_level3_divisions(
+    html = fetch_event_page(
         event_url
+    )
+
+    rounds = find_rounds(
+        html
+    )
+
+    if not rounds:
+        raise ValueError(
+            f"No competition rounds found for "
+            f"{competition_id}"
+        )
+
+    divisions = get_level3_divisions(
+        event_url,
+        html=html,
     )
 
     print(
         f"Found {len(divisions)} "
         f"Level 3 divisions"
+    )
+
+    print(
+        f"Rounds found: "
+        f"{', '.join(rounds)}"
     )
 
     print(
@@ -242,14 +312,14 @@ def scrape_level3_event(
 
         try:
 
-            pdf_path = get_score_pdf(
+            pdf_paths = get_score_pdf(
                 event_url,
                 competition_id,
                 division,
                 rounds,
             )
 
-            if pdf_path is None:
+            if not pdf_paths:
 
                 print(
                     "  ERROR: "
@@ -273,15 +343,19 @@ def scrape_level3_event(
 
                 continue
 
-            time.sleep(
-                REQUEST_DELAY
-            )
+            score_records = []
 
-            score_records = (
-                parse_score_pdf(
-                    str(pdf_path)
+            for pdf_path in pdf_paths:
+
+                parsed_records = (
+                    parse_score_pdf(
+                        str(pdf_path)
+                    )
                 )
-            )
+
+                score_records.extend(
+                    parsed_records
+                )
 
             results_data = (
                 get_division_results(
@@ -527,7 +601,34 @@ def scrape_level3_event(
                 f"{record['team_name_raw']}"
             )
 
+    event_qa = {
+        "division_count": len(divisions),
+        "problem_division_count": len(
+            problem_divisions
+        ),
+        "no_pdf_division_count": sum(
+            row["status"] == "NO PDF"
+            for row in division_summaries
+        ),
+        "error_division_count": sum(
+            row["status"] == "ERROR"
+            for row in division_summaries
+        ),
+        "check_division_count": sum(
+            row["status"] == "CHECK"
+            for row in division_summaries
+        ),
+        "pdf_records": total_pdf_records,
+        "merged_records": len(
+            all_merged_records
+        ),
+        "unmatched_records": len(
+            all_unmatched_records
+        ),
+    }
+
     return (
         all_merged_records,
         all_unmatched_records,
+        event_qa,
     )

@@ -1,10 +1,33 @@
-def normalize_name(value: str) -> str:
-    """Normalize names for matching between HTML results and PDF rows."""
-    return " ".join(
-        value.lower()
-        .replace("&", "and")
-        .split()
+import re
+
+
+def normalize_name(
+    value: str,
+) -> str:
+    """
+    Normalize program/team names for matching.
+    """
+
+    value = value.lower()
+
+    value = value.replace(
+        "&",
+        "and",
     )
+
+    value = re.sub(
+        r"[^a-z0-9]+",
+        " ",
+        value,
+    )
+
+    value = re.sub(
+        r"\s+",
+        " ",
+        value,
+    )
+
+    return value.strip()
 
 
 def build_result_lookup(

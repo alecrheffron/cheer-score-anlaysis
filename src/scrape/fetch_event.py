@@ -1,3 +1,4 @@
+import re
 import json
 from pathlib import Path
 from urllib.parse import urlencode
@@ -8,7 +9,7 @@ from bs4 import BeautifulSoup
 
 EVENT_URL = (
     "https://tv.varsity.com/events/"
-    "14478911-2026-nca-all-star-national-championship/results"
+    "14478838/results"
 )
 
 
@@ -52,6 +53,169 @@ def find_divisions(html: str) -> list[str]:
             seen.add(title)
 
     return divisions
+
+
+def find_rounds(
+    html: str,
+) -> list[str]:
+    """
+    Extract unique competition round names
+    from a Varsity event results page.
+
+    Sources checked:
+    1. Round dropdown
+    2. Score Breakdown titles
+    3. Visible heading text
+    4. Raw HTML / embedded page data
+    """
+
+    soup = BeautifulSoup(
+        html,
+        "lxml",
+    )
+
+    rounds = []
+    seen = set()
+
+    round_pattern = re.compile(
+        r"\b("
+        r"Prelims|"
+        r"Finals|"
+        r"Semifinals|"
+        r"Semi-Finals|"
+        r"Round\s+\d+"
+        r")\b",
+        flags=re.IGNORECASE,
+    )
+
+    def add_round(
+        value: str,
+    ) -> None:
+        """
+        Normalize and add one round name.
+        """
+
+        value = value.strip()
+
+        if value.lower().startswith(
+            "round "
+        ):
+            value = value.title()
+
+        elif value.lower() == "prelims":
+            value = "Prelims"
+
+        elif value.lower() == "finals":
+            value = "Finals"
+
+        elif value.lower() in (
+            "semifinals",
+            "semi-finals",
+        ):
+            value = "Semifinals"
+
+        if value not in seen:
+            rounds.append(
+                value
+            )
+
+            seen.add(
+                value
+            )
+
+    # --------------------------------------------------
+    # 1. Round dropdown
+    # --------------------------------------------------
+
+    round_list = soup.find(
+        "div",
+        id="filter-roundName",
+    )
+
+    if round_list is not None:
+
+        for span in round_list.find_all(
+            "span",
+            class_="dropdown-title",
+        ):
+
+            round_name = span.get_text(
+                " ",
+                strip=True,
+            )
+
+            if round_name:
+                add_round(
+                    round_name
+                )
+
+    if rounds:
+        return rounds
+
+    # --------------------------------------------------
+    # 2. Score Breakdown titles
+    # --------------------------------------------------
+
+    breakdowns = find_score_breakdowns(
+        html
+    )
+
+    for breakdown in breakdowns:
+
+        division_round = breakdown[
+            "division_round"
+        ]
+
+        match = round_pattern.search(
+            division_round
+        )
+
+        if match is not None:
+            add_round(
+                match.group(1)
+            )
+
+    if rounds:
+        return rounds
+
+    # --------------------------------------------------
+    # 3. Visible headings
+    # --------------------------------------------------
+
+    for heading in soup.find_all(
+        ["h2", "h3", "h4", "h5"],
+    ):
+
+        heading_text = heading.get_text(
+            " ",
+            strip=True,
+        )
+
+        match = round_pattern.search(
+            heading_text
+        )
+
+        if match is not None:
+            add_round(
+                match.group(1)
+            )
+
+    if rounds:
+        return rounds
+
+    # --------------------------------------------------
+    # 4. Raw HTML / embedded serialized data
+    # --------------------------------------------------
+
+    for match in round_pattern.finditer(
+        html
+    ):
+
+        add_round(
+            match.group(1)
+        )
+
+    return rounds
 
 
 def find_score_breakdowns(html: str) -> list[dict]:
@@ -100,6 +264,10 @@ def build_division_url(
     round_name: str = "Finals",
 ) -> str:
     """Build a Varsity results URL filtered to one division and round."""
+
+    if round_name == "Semifinals":
+        round_name = "Semi-Finals"
+
     facets = {
         "class": "Cheer",
         "division": division,
@@ -116,6 +284,7 @@ def build_division_url(
     )
 
     return f"{base_url}?{query}"
+
 
 def find_result_rows(html: str) -> list[dict]:
     """Extract team result rows from a filtered Varsity results page."""
@@ -173,6 +342,10 @@ def build_view_all_url(
     round_name: str = "Finals",
 ) -> str:
     """Build a Varsity View All results URL for one division and round."""
+
+    if round_name == "Semifinals":
+        round_name = "Semi-Finals"
+
     facets = {
         "class": "Cheer",
         "division": division,
@@ -201,30 +374,21 @@ def download_pdf(url: str, filename: str) -> Path:
     return output_path
 
 if __name__ == "__main__":
-    test_division = "L3 Youth - Flex - Small"
 
-    division_url = build_division_url(
-        EVENT_URL,
-        test_division,
-        "Finals",
+    html = fetch_event_page(
+        EVENT_URL
     )
 
-    division_html = fetch_event_page(
-        division_url
-    )
-
-    breakdowns = find_score_breakdowns(
-        division_html
+    rounds = find_rounds(
+        html
     )
 
     print(
-        f"Found {len(breakdowns)} "
-        f"score breakdown PDF(s)"
+        f"Found {len(rounds)} round(s)"
     )
 
-    pdf_path = download_pdf(
-        breakdowns[0]["pdf_url"],
-        "l3_youth_flex_small.pdf",
-    )
+    for round_name in rounds:
 
-    print(f"Saved PDF to: {pdf_path}")
+        print(
+            f"  {round_name}"
+        )

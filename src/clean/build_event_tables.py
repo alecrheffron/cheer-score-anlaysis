@@ -55,6 +55,11 @@ def build_performances_table(
     the performances fact table.
     """
 
+    if not merged_records:
+        return pd.DataFrame(
+            columns=PERFORMANCE_COLUMNS
+        )
+
     df = pd.DataFrame(
         merged_records
     )
