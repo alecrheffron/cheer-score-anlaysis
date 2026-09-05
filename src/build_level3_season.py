@@ -394,6 +394,20 @@ def main(
 
                 continue
 
+            if event_qa[
+                "error_division_count"
+            ] > 0:
+                raise ValueError(
+                    f"{event_qa['error_division_count']} "
+                    "division(s) had scraper errors"
+                )
+
+            if unmatched_records:
+                raise ValueError(
+                    f"{len(unmatched_records)} "
+                    "unmatched records"
+                )
+
             source_incomplete = (
                 event_qa[
                     "check_division_count"
@@ -461,20 +475,6 @@ def main(
                 )
 
                 continue
-
-            if event_qa[
-                "error_division_count"
-            ] > 0:
-                raise ValueError(
-                    f"{event_qa['error_division_count']} "
-                    "division(s) had scraper errors"
-                )
-
-            if unmatched_records:
-                raise ValueError(
-                    f"{len(unmatched_records)} "
-                    "unmatched records"
-                )
 
             (
                 performance_count,
