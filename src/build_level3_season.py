@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 
 import pandas as pd
@@ -38,30 +37,10 @@ def make_competition_id(
 ) -> str:
     """
     Build a stable competition ID
-    from Varsity event ID and name.
+    from the Varsity event ID.
     """
 
-    name_slug = (
-        event_name
-        .lower()
-        .strip()
-    )
-
-    name_slug = re.sub(
-        r"[^a-z0-9]+",
-        "_",
-        name_slug,
-    )
-
-    name_slug = (
-        name_slug
-        .strip("_")
-    )
-
-    return (
-        f"{event_id}_"
-        f"{name_slug}"
-    )
+    return str(event_id)
 
 
 def event_is_complete(
@@ -228,7 +207,7 @@ def save_status(
 
 
 def main(
-    limit: int | None = 50,
+    limit: int | None = None,
 ) -> None:
     """
     Scrape qualifying Level 3 events.
@@ -574,4 +553,22 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help=(
+            "Optional maximum number of "
+            "qualified events to process"
+        ),
+    )
+
+    args = parser.parse_args()
+
+    main(
+        limit=args.limit
+    )
