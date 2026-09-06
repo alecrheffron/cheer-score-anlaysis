@@ -51,6 +51,9 @@ def detect_round(page) -> str | None:
     if "Prelims" in text:
         return "Prelims"
 
+    if "Semi-Finals" in text or "Semifinals" in text:
+        return "Semifinals"
+
     if "Finals" in text:
         return "Finals"
 

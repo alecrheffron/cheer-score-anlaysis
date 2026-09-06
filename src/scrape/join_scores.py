@@ -1,5 +1,7 @@
 import re
 
+from difflib import SequenceMatcher
+
 
 def normalize_name(
     value: str,
@@ -64,18 +66,71 @@ def join_score_records(
 
     for score in score_records:
 
+        score_round = score["round"]
+        score_name = normalize_name(
+            score["team_name_raw"]
+        )
+
         key = (
-            score["round"],
-            normalize_name(
-                score["team_name_raw"]
-            ),
+            score_round,
+            score_name,
         )
 
         result = result_lookup.get(key)
 
         if result is None:
-            unmatched_records.append(score)
-            continue
+            candidates = []
+
+            for candidate_key, candidate_result in result_lookup.items():
+                candidate_round, candidate_name = candidate_key
+
+                if candidate_round != score_round:
+                    continue
+
+                similarity = SequenceMatcher(
+                    None,
+                    score_name,
+                    candidate_name,
+                ).ratio()
+
+                candidates.append(
+                    (
+                        similarity,
+                        candidate_name,
+                        candidate_result,
+                    )
+                )
+
+            candidates.sort(
+                key=lambda item: item[0],
+                reverse=True,
+            )
+
+            if candidates:
+                best_score, best_name, best_result = candidates[0]
+
+                second_score = (
+                    candidates[1][0]
+                    if len(candidates) > 1
+                    else 0.0
+                )
+
+                if (
+                    best_score >= 0.96
+                    and best_score - second_score >= 0.03
+                ):
+                    print(
+                        "  Fuzzy name match: "
+                        f"{score_name!r} -> "
+                        f"{best_name!r} "
+                        f"({best_score:.3f})"
+                    )
+
+                    result = best_result
+
+            if result is None:
+                unmatched_records.append(score)
+                continue
 
         merged_record = {
             "division": division,
