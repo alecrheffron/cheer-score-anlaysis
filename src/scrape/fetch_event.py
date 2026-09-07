@@ -300,27 +300,90 @@ def find_result_rows(html: str) -> list[dict]:
 
         rank = cells[0].get_text(" ", strip=True)
 
-        program_cell = cells[2]
+        if len(cells) >= 8:
+            # Alternate Varsity results layout:
+            # RNK | blank | Replay | Program/Team | RS | DED | PS | ES
 
-        program_tag = program_cell.select_one("div.text")
-        team_tag = program_cell.select_one("div.sub-text")
+            program_name = cells[3].get_text(
+                " ",
+                strip=True,
+            )
 
-        program_name = (
-            program_tag.get_text(" ", strip=True)
-            if program_tag
-            else ""
-        )
+            team_name = ""
 
-        team_name = (
-            team_tag.get_text(" ", strip=True)
-            if team_tag
-            else ""
-        )
+            raw_score = cells[4].get_text(
+                " ",
+                strip=True,
+            )
 
-        raw_score = cells[3].get_text(" ", strip=True)
-        deductions = cells[4].get_text(" ", strip=True)
-        performance_score = cells[5].get_text(" ", strip=True)
-        event_score = cells[6].get_text(" ", strip=True)
+            deductions = cells[5].get_text(
+                " ",
+                strip=True,
+            )
+
+            performance_score = cells[6].get_text(
+                " ",
+                strip=True,
+            )
+
+            event_score = cells[7].get_text(
+                " ",
+                strip=True,
+            )
+
+        else:
+            # Standard Varsity results layout:
+            # RNK | Replay | Program/Team | RS | DED | PS | ES
+
+            program_cell = cells[2]
+
+            program_tag = program_cell.select_one(
+                "div.text"
+            )
+            team_tag = program_cell.select_one(
+                "div.sub-text"
+            )
+
+            if not program_tag and not team_tag:
+                continue
+
+            program_name = (
+                program_tag.get_text(
+                    " ",
+                    strip=True,
+                )
+                if program_tag
+                else ""
+            )
+
+            team_name = (
+                team_tag.get_text(
+                    " ",
+                    strip=True,
+                )
+                if team_tag
+                else ""
+            )
+
+            raw_score = cells[3].get_text(
+                " ",
+                strip=True,
+            )
+
+            deductions = cells[4].get_text(
+                " ",
+                strip=True,
+            )
+
+            performance_score = cells[5].get_text(
+                " ",
+                strip=True,
+            )
+
+            event_score = cells[6].get_text(
+                " ",
+                strip=True,
+            )
 
         results.append(
             {
@@ -335,6 +398,7 @@ def find_result_rows(html: str) -> list[dict]:
         )
 
     return results
+
 
 def build_view_all_url(
     base_url: str,

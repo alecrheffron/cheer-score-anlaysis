@@ -32,16 +32,20 @@ def clean_cell(value: str | None) -> str:
 
 
 def detect_round(page) -> str | None:
+
     """
     Detect the competition round from PDF page text.
 
     Supports standard labels such as:
         Prelims
+        Wild Card
+        Semifinals
         Finals
         Round 1
         Round 2
         etc.
     """
+
 
     text = page.extract_text()
 
@@ -50,6 +54,9 @@ def detect_round(page) -> str | None:
 
     if "Prelims" in text:
         return "Prelims"
+
+    if "Wild Card" in text:
+        return "Wild Card"
 
     if "Semi-Finals" in text or "Semifinals" in text:
         return "Semifinals"
