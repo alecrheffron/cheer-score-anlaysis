@@ -31,6 +31,26 @@ OUTPUT_PATH = Path(
 )
 
 
+KNOWN_EVENT_OVERRIDES = [
+    {
+        "event_id": "14478856",
+        "event_name_raw": (
+            "Apr 30-May 3 2026 The Summit "
+            "ESPN Wide World of Sports Complex · Orlando, FL"
+        ),
+        "event_card_text": (
+            "Apr 30-May 3 2026 The Summit "
+            "ESPN Wide World of Sports Complex · Orlando, FL "
+            "Replays Results"
+        ),
+        "results_url": (
+            "https://tv.varsity.com/events/"
+            "14478856/results"
+        ),
+        "source_month": "2026-05",
+    },
+]
+
 def build_month_urls() -> list[str]:
     """
     Build one Varsity results URL for each
@@ -350,6 +370,10 @@ def discover_season_events() -> pd.DataFrame:
         time.sleep(
             REQUEST_DELAY
         )
+
+    all_records.extend(
+        KNOWN_EVENT_OVERRIDES
+    )
 
     df = pd.DataFrame(
         all_records

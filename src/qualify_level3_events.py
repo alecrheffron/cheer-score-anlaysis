@@ -3,6 +3,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from scrape.fetch_event import (
+    fetch_event_page,
+    find_divisions,
+)
 from scrape.scrape_level3_event import (
     get_level3_divisions,
 )
@@ -17,6 +21,81 @@ OUTPUT_PATH = Path(
 )
 
 REQUEST_DELAY = 0.5
+MAX_ATTEMPTS = 3
+
+
+def get_qualified_divisions(
+    event_url: str,
+) -> tuple[list[str], int]:
+    """
+    Fetch an event page with retries and return
+    its standard Level 3 divisions.
+
+    Repeated fetches protect season qualification
+    from transient or incomplete Varsity responses.
+    """
+
+    observations = []
+
+    for attempt in range(
+        1,
+        MAX_ATTEMPTS + 1,
+    ):
+        html = fetch_event_page(
+            event_url
+        )
+
+        all_divisions = find_divisions(
+            html
+        )
+
+        level3_divisions = (
+            get_level3_divisions(
+                event_url,
+                html=html,
+            )
+        )
+
+        observation = (
+            tuple(all_divisions),
+            tuple(level3_divisions),
+        )
+
+        observations.append(
+            observation
+        )
+
+        # A populated division list is usable
+        # immediately. Empty lists are retried
+        # because Varsity can occasionally return
+        # incomplete results-page content.
+        if all_divisions:
+            return (
+                level3_divisions,
+                len(all_divisions),
+            )
+
+        if attempt < MAX_ATTEMPTS:
+            time.sleep(
+                REQUEST_DELAY
+            )
+
+    # Three successful HTTP responses containing
+    # no divisions are treated as a genuine
+    # no-results/no-division page.
+    if (
+        observations
+        and all(
+            observation == observations[0]
+            for observation in observations
+        )
+    ):
+        return [], 0
+
+    raise RuntimeError(
+        "Inconsistent division discovery "
+        "across qualification attempts"
+    )
 
 
 def qualify_level3_events() -> pd.DataFrame:
@@ -51,7 +130,10 @@ def qualify_level3_events() -> pd.DataFrame:
 
         try:
 
-            divisions = get_level3_divisions(
+            (
+                divisions,
+                all_division_count,
+            ) = get_qualified_divisions(
                 event_url
             )
 
@@ -79,7 +161,9 @@ def qualify_level3_events() -> pd.DataFrame:
             else:
 
                 print(
-                    "  skip — no standard L3"
+                    "  skip — no standard L3 "
+                    f"({all_division_count} "
+                    "total divisions)"
                 )
 
         except Exception as exc:
@@ -92,8 +176,10 @@ def qualify_level3_events() -> pd.DataFrame:
 
             error_events.append(
                 {
-                    "event_id": row["event_id"],
-                    "results_url": event_url,
+                    "event_id":
+                        row["event_id"],
+                    "results_url":
+                        event_url,
                     "error_type":
                         type(exc).__name__,
                     "error_message":
@@ -156,12 +242,12 @@ def qualify_level3_events() -> pd.DataFrame:
         f"Saved: {OUTPUT_PATH}"
     )
 
-    if error_events:
+    error_path = Path(
+        "data/interim/"
+        "season_2026_level3_qualification_errors.csv"
+    )
 
-        error_path = Path(
-            "data/interim/"
-            "season_2026_level3_qualification_errors.csv"
-        )
+    if error_events:
 
         pd.DataFrame(
             error_events
@@ -173,6 +259,10 @@ def qualify_level3_events() -> pd.DataFrame:
         print(
             f"Errors saved: {error_path}"
         )
+
+    elif error_path.exists():
+
+        error_path.unlink()
 
     return qualified_df
 
