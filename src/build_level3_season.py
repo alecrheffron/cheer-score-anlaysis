@@ -417,11 +417,33 @@ def main(
                         "breakdown PDFs"
                     )
 
-                print()
-                print(
-                    "EVENT SKIPPED | "
-                    "Incomplete source data"
-                )
+                if merged_records:
+                    (
+                        performance_count,
+                        division_count,
+                        team_count,
+                    ) = save_event_tables(
+                        competition_id,
+                        merged_records,
+                    )
+
+                    print()
+                    print(
+                        "EVENT PARTIAL | "
+                        f"{performance_count} usable "
+                        "performances saved"
+                    )
+
+                else:
+                    performance_count = 0
+                    division_count = 0
+                    team_count = 0
+
+                    print()
+                    print(
+                        "EVENT SKIPPED | "
+                        "No usable performances"
+                    )
 
                 update_status_row(
                     status_rows,
@@ -437,13 +459,11 @@ def main(
                         "status":
                             "SOURCE_INCOMPLETE",
                         "performances":
-                            0,
+                            performance_count,
                         "divisions":
-                            event_qa[
-                                "division_count"
-                            ],
+                            division_count,
                         "teams":
-                            0,
+                            team_count,
                         "error":
                             "; ".join(reasons),
                     }

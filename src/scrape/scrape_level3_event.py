@@ -471,9 +471,15 @@ def scrape_level3_event(
                 }
             )
 
-            all_merged_records.extend(
-                merged_records
-            )
+            if status == "OK":
+                all_merged_records.extend(
+                    merged_records
+                )
+            else:
+                print(
+                    "  Excluding division "
+                    "from analytical records"
+                )
 
             for record in unmatched:
 
