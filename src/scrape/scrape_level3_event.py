@@ -357,6 +357,37 @@ def scrape_level3_event(
                     parsed_records
                 )
 
+            # Some single-round Varsity events use a different
+            # round label in the score PDF than on the results page.
+            # Example: PDF says "Finals" while results say "Round 1".
+            #
+            # Only normalize when both sources clearly represent
+            # exactly one round, so real multi-round events are untouched.
+            if len(rounds) == 1 and score_records:
+                pdf_rounds = {
+                    record.get("round")
+                    for record in score_records
+                    if record.get("round")
+                }
+
+                if (
+                    len(pdf_rounds) == 1
+                    and pdf_rounds != {rounds[0]}
+                ):
+                    pdf_round = next(
+                        iter(pdf_rounds)
+                    )
+
+                    print(
+                        "Normalizing single-round "
+                        f"PDF label: "
+                        f"{pdf_round!r} -> "
+                        f"{rounds[0]!r}"
+                    )
+
+                    for record in score_records:
+                        record["round"] = rounds[0]
+
             results_data = (
                 get_division_results(
                     event_url,
