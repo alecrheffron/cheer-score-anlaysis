@@ -295,21 +295,64 @@ def main(
             None,
         )
 
-        if (
-            prior_status is not None
-            and prior_status[
-                "status"
-            ] == "SUCCESS"
-            and event_is_complete(
-                competition_id
-            )
-        ):
+        if prior_status is not None:
 
-            print(
-                "SKIP: already complete"
+            prior_state = str(
+                prior_status["status"]
             )
 
-            continue
+            prior_performances = pd.to_numeric(
+                prior_status.get(
+                    "performances"
+                ),
+                errors="coerce",
+            )
+
+            if (
+                prior_state == "SUCCESS"
+                and event_is_complete(
+                    competition_id
+                )
+            ):
+                print(
+                    "SKIP: already complete"
+                )
+                continue
+
+            if (
+                prior_state
+                == "NO_SCORE_BREAKDOWNS"
+            ):
+                print(
+                    "SKIP: no score "
+                    "breakdowns published"
+                )
+                continue
+
+            if (
+                prior_state
+                == "SOURCE_INCOMPLETE"
+            ):
+                if (
+                    pd.notna(
+                        prior_performances
+                    )
+                    and prior_performances > 0
+                ):
+                    if event_is_complete(
+                        competition_id
+                    ):
+                        print(
+                            "SKIP: partial event "
+                            "already processed"
+                        )
+                        continue
+                else:
+                    print(
+                        "SKIP: source incomplete "
+                        "with no usable records"
+                    )
+                    continue
 
         try:
 
