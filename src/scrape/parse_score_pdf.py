@@ -143,7 +143,10 @@ def valid_team_row(
     cleaned_row: list[str],
 ) -> bool:
     """
-    Reject headers, footers, blank rows, and malformed table fragments.
+    Accept real team rows and page-break continuation fragments.
+
+    Continuation fragments have a blank team name and contain
+    execution scores shifted into the paired-score columns.
     """
     if len(cleaned_row) != len(COLUMN_NAMES):
         return False
@@ -151,7 +154,22 @@ def valid_team_row(
     team_name = cleaned_row[0].strip()
 
     if not team_name:
-        return False
+        paired_score_indexes = [
+            1,   # stunt
+            4,   # pyramid
+            5,   # toss
+            6,   # standing tumbling
+            8,   # running tumbling
+            11,  # jump
+            14,  # dance
+        ]
+
+        return all(
+            split_score_pair(
+                cleaned_row[index]
+            )[0] is not None
+            for index in paired_score_indexes
+        )
 
     invalid_names = {
         "team name",

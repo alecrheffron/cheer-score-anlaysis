@@ -304,12 +304,35 @@ def find_result_rows(html: str) -> list[dict]:
             # Alternate Varsity results layout:
             # RNK | blank | Replay | Program/Team | RS | DED | PS | ES
 
-            program_name = cells[3].get_text(
-                " ",
-                strip=True,
+            program_cell = cells[3]
+
+            program_tag = program_cell.select_one(
+                "div.text"
+            )
+            team_tag = program_cell.select_one(
+                "div.sub-text"
             )
 
-            team_name = ""
+            if not program_tag and not team_tag:
+                continue
+
+            program_name = (
+                program_tag.get_text(
+                    " ",
+                    strip=True,
+                )
+                if program_tag
+                else ""
+            )
+
+            team_name = (
+                team_tag.get_text(
+                    " ",
+                    strip=True,
+                )
+                if team_tag
+                else ""
+            )
 
             raw_score = cells[4].get_text(
                 " ",
