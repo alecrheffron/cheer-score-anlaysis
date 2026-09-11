@@ -8,7 +8,7 @@ from scrape.fetch_event import (
     find_divisions,
 )
 from scrape.scrape_level3_event import (
-    get_level3_divisions,
+    get_level_divisions,
 )
 
 
@@ -16,9 +16,33 @@ INPUT_PATH = Path(
     "data/interim/season_2026_events.csv"
 )
 
-OUTPUT_PATH = Path(
-    "data/interim/season_2026_level3_events.csv"
-)
+def get_level_paths(
+    level: str,
+) -> tuple[Path, Path]:
+    """
+    Build level-specific qualification paths.
+    """
+
+    level_slug = level.replace(
+        ".",
+        "_",
+    )
+
+    output_path = Path(
+        "data/interim/"
+        f"season_2026_level{level_slug}_events.csv"
+    )
+
+    error_path = Path(
+        "data/interim/"
+        f"season_2026_level{level_slug}_"
+        "qualification_errors.csv"
+    )
+
+    return (
+        output_path,
+        error_path,
+    )
 
 REQUEST_DELAY = 0.5
 MAX_ATTEMPTS = 3
@@ -26,10 +50,11 @@ MAX_ATTEMPTS = 3
 
 def get_qualified_divisions(
     event_url: str,
+    level: str,
 ) -> tuple[list[str], int]:
     """
     Fetch an event page with retries and return
-    its standard Level 3 divisions.
+    its standard divisions for one level.
 
     Repeated fetches protect season qualification
     from transient or incomplete Varsity responses.
@@ -49,16 +74,17 @@ def get_qualified_divisions(
             html
         )
 
-        level3_divisions = (
-            get_level3_divisions(
+        level_divisions = (
+            get_level_divisions(
                 event_url,
+                level=level,
                 html=html,
             )
         )
 
         observation = (
             tuple(all_divisions),
-            tuple(level3_divisions),
+            tuple(level_divisions),
         )
 
         observations.append(
@@ -71,7 +97,7 @@ def get_qualified_divisions(
         # incomplete results-page content.
         if all_divisions:
             return (
-                level3_divisions,
+                level_divisions,
                 len(all_divisions),
             )
 
@@ -98,11 +124,34 @@ def get_qualified_divisions(
     )
 
 
-def qualify_level3_events() -> pd.DataFrame:
+def qualify_level_events(
+    level: str = "3",
+) -> pd.DataFrame:
     """
     Check discovered season events and keep only
-    events containing standard Level 3 divisions.
+    events containing standard divisions for
+    the selected competitive level.
     """
+
+    (
+        output_path,
+        error_path,
+    ) = get_level_paths(
+        level
+    )
+
+    level_slug = level.replace(
+        ".",
+        "_",
+    )
+
+    division_count_col = (
+        f"level{level_slug}_division_count"
+    )
+
+    divisions_col = (
+        f"level{level_slug}_divisions"
+    )
 
     events = pd.read_csv(
         INPUT_PATH,
@@ -134,7 +183,8 @@ def qualify_level3_events() -> pd.DataFrame:
                 divisions,
                 all_division_count,
             ) = get_qualified_divisions(
-                event_url
+                event_url,
+                level,
             )
 
             if divisions:
@@ -142,11 +192,11 @@ def qualify_level3_events() -> pd.DataFrame:
                 qualified_row = row.to_dict()
 
                 qualified_row[
-                    "level3_division_count"
+                    division_count_col
                 ] = len(divisions)
 
                 qualified_row[
-                    "level3_divisions"
+                    divisions_col
                 ] = " | ".join(divisions)
 
                 qualified_events.append(
@@ -155,13 +205,15 @@ def qualify_level3_events() -> pd.DataFrame:
 
                 print(
                     f"  KEEP — "
-                    f"{len(divisions)} L3 divisions"
+                    f"{len(divisions)} "
+                    f"L{level} divisions"
                 )
 
             else:
 
                 print(
-                    "  skip — no standard L3 "
+                    f"  skip — no standard "
+                    f"L{level} "
                     f"({all_division_count} "
                     "total divisions)"
                 )
@@ -195,19 +247,21 @@ def qualify_level3_events() -> pd.DataFrame:
         qualified_events
     )
 
-    OUTPUT_PATH.parent.mkdir(
+    output_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
     qualified_df.to_csv(
-        OUTPUT_PATH,
+        output_path,
         index=False,
     )
 
     print()
     print("=" * 80)
-    print("LEVEL 3 SEASON QUALIFICATION")
+    print(
+        f"LEVEL {level} SEASON QUALIFICATION"
+    )
     print("=" * 80)
 
     print(
@@ -216,7 +270,7 @@ def qualify_level3_events() -> pd.DataFrame:
     )
 
     print(
-        f"Level 3 events:      "
+        f"Level {level} events:      "
         f"{len(qualified_df)}"
     )
 
@@ -233,18 +287,13 @@ def qualify_level3_events() -> pd.DataFrame:
     if not qualified_df.empty:
 
         print(
-            f"Total L3 divisions:  "
-            f"{qualified_df['level3_division_count'].sum()}"
+            f"Total L{level} divisions:  "
+            f"{qualified_df[division_count_col].sum()}"
         )
 
     print()
     print(
-        f"Saved: {OUTPUT_PATH}"
-    )
-
-    error_path = Path(
-        "data/interim/"
-        "season_2026_level3_qualification_errors.csv"
+        f"Saved: {output_path}"
     )
 
     if error_events:
@@ -268,5 +317,32 @@ def qualify_level3_events() -> pd.DataFrame:
 
 
 if __name__ == "__main__":
+    import argparse
 
-    qualify_level3_events()
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--level",
+        type=str,
+        default="3",
+        choices=[
+            "1",
+            "2",
+            "3",
+            "4",
+            "4.2",
+            "5",
+            "6",
+            "7",
+        ],
+        help=(
+            "Competitive All Star level "
+            "to qualify"
+        ),
+    )
+
+    args = parser.parse_args()
+
+    qualify_level_events(
+        level=args.level
+    )

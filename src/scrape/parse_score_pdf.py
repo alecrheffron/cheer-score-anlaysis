@@ -126,18 +126,32 @@ def normalize_table_row(
     Normalize pdfplumber table rows to the standard
     16-column Varsity scoring schema.
 
-    Some pages are extracted with an empty padding
-    column on both the left and right sides, producing
-    18 columns instead of 16.
-    """
-    if (
-        len(row) == 18
-        and not clean_cell(row[0])
-        and not clean_cell(row[-1])
-    ):
-        return row[1:-1]
+    Supports:
+    - standard 16-column score sheets
+    - 18-column rows with empty outer padding
+    - 15-column no-toss score sheets
+    - 17-column no-toss rows with empty outer padding
 
-    return row
+    No-toss rows receive a blank toss field so later
+    scoring columns remain aligned.
+    """
+    normalized = row
+
+    if (
+        len(normalized) in {17, 18}
+        and not clean_cell(normalized[0])
+        and not clean_cell(normalized[-1])
+    ):
+        normalized = normalized[1:-1]
+
+    if len(normalized) == 15:
+        normalized = normalized.copy()
+        normalized.insert(
+            5,
+            "",
+        )
+
+    return normalized
 
 def valid_team_row(
     cleaned_row: list[str],
@@ -157,12 +171,17 @@ def valid_team_row(
         paired_score_indexes = [
             1,   # stunt
             4,   # pyramid
-            5,   # toss
             6,   # standing tumbling
             8,   # running tumbling
             11,  # jump
             14,  # dance
         ]
+
+        if cleaned_row[5]:
+            paired_score_indexes.insert(
+                2,
+                5,  # toss
+            )
 
         return all(
             split_score_pair(

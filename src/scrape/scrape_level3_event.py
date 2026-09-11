@@ -56,16 +56,18 @@ def make_filename(
     return f"{filename}.pdf"
 
 
-def get_level3_divisions(
+def get_level_divisions(
     event_url: str,
+    level: str,
     html: str | None = None,
 ) -> list[str]:
     """
-    Discover standard Level 3 divisions
-    from one event page.
+    Discover standard All Star divisions
+    for one level from one event page.
 
-    If event HTML is supplied, reuse it so the
-    event page does not need to be fetched twice.
+    Preserves the raw Varsity division structure
+    rather than assuming the same division types
+    exist at every level.
     """
 
     if html is None:
@@ -77,20 +79,42 @@ def get_level3_divisions(
         html
     )
 
-    excluded_groups = (
-        "L3 - U16",
-        "L3 - U18",
-    )
+    level_prefix = f"L{level}"
 
     return [
         division
         for division in divisions
-        if division.startswith(
+        if (
             (
-                "L3 Youth",
-                "L3 Junior",
-                "L3 Senior",
+                division.startswith(
+                    f"{level_prefix} Youth"
+                )
+                or division.startswith(
+                    f"{level_prefix} Junior"
+                )
+                or division.startswith(
+                    f"{level_prefix} Senior"
+                )
+                or (
+                    level in {"1", "2"}
+                    and division.startswith(
+                        f"{level_prefix} Mini"
+                    )
+                )
+                or (
+                    level == "1"
+                    and division.startswith(
+                        "L1 Tiny"
+                    )
+                )
+                or (
+                    level == "6"
+                    and division.startswith(
+                        "L6 Limited"
+                    )
+                )
             )
+            and "Novice" not in division
         )
     ]
 
@@ -248,9 +272,10 @@ def get_division_results(
     }
 
 
-def scrape_level3_event(
+def scrape_level_event(
     event_url: str,
     competition_id: str,
+    level: str,
 ) -> tuple[
     list[dict],
     list[dict],
@@ -258,8 +283,8 @@ def scrape_level3_event(
 ]:
     """
     Download, parse, and join all
-    standard Level 3 divisions
-    for one competition.
+    standard divisions for one level
+    within one competition.
     """
 
     html = fetch_event_page(
@@ -276,14 +301,15 @@ def scrape_level3_event(
             f"{competition_id}"
         )
 
-    divisions = get_level3_divisions(
+    divisions = get_level_divisions(
         event_url,
+        level=level,
         html=html,
     )
 
     print(
         f"Found {len(divisions)} "
-        f"Level 3 divisions"
+        f"Level {level} divisions"
     )
 
     print(
@@ -524,7 +550,7 @@ def scrape_level3_event(
     )
 
     print(
-        "LEVEL 3 EVENT QA"
+        f"LEVEL {level} EVENT QA"
     )
 
     print(

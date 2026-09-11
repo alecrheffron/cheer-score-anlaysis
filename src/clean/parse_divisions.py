@@ -17,13 +17,17 @@ def parse_division_name(
 
     first_part = parts[0]
 
-    level = int(
+    level = (
         first_part.split()[0]
         .replace("L", "")
     )
 
     age_group = (
-        "Youth"
+        "Tiny"
+        if "Tiny" in first_part
+        else "Mini"
+        if "Mini" in first_part
+        else "Youth"
         if "Youth" in first_part
         else "Junior"
         if "Junior" in first_part
