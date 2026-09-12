@@ -7,7 +7,7 @@ from scrape.fetch_event import (
     fetch_event_page,
     find_divisions,
 )
-from scrape.scrape_level3_event import (
+from scrape.scrape_level_event import (
     get_level_divisions,
 )
 
