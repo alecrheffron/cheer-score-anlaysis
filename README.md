@@ -43,16 +43,22 @@ Placement analyses generally use fields of at least three teams. This leaves 21,
 
 ### 1. Meeting More Score Benchmarks Is Associated With More First-Place Finishes
 
+### 1. Meeting More Score Benchmarks Is Associated With More First-Place Finishes
+
 Benchmarks were calculated at the 75th and 90th percentiles of training performances, separately by level and scorecard format. Their relationships with first-place finishes were evaluated on other competitions.
 
-The six benchmark categories are:
+#### Level 3 Benchmark Targets — 50-Point Scorecard
 
-- Stunt execution
-- Pyramid execution
-- Standing tumbling execution
-- Running tumbling execution
-- Show
-- Routine composition
+| Category | 75th-percentile target | 90th-percentile target |
+|---|---:|---:|
+| Stunt execution | 3.90 | 3.90 |
+| Pyramid execution | 3.90 | 3.90 |
+| Standing tumbling execution | 3.90 | 4.00 |
+| Running tumbling execution | 3.90 | 4.00 |
+| Show | 1.83 | 1.87 |
+| Routine composition | 1.83 | 1.90 |
+
+A performance meets a benchmark when its category score is at or above the target. These are reference scores, not minimum requirements for winning. Scores occur in discrete increments, so the 75th and 90th percentiles can produce identical targets.
 
 ![Benchmark attainment across levels](reports/figures/benchmark_attainment_by_level.png)
 
