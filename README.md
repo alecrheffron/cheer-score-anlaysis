@@ -2,29 +2,43 @@
 
 A coaching-focused analysis of 2025–26 competition scores: which scoring categories distinguish competitive performances, what strong score profiles look like, and how deductions and round-to-round changes relate to results.
 
-## Project Overview
+## Why This Project Matters
 
-This project combines cheerleading domain knowledge with Python analysis to turn published score breakdowns into practical reference points for coaches.
+Coaches make decisions about routine construction, practice priorities, execution, and risk throughout a season. Score sheets provide feedback on individual performances, but they do not automatically show which patterns repeat across teams and competitions.
 
-The analysis covers 31,151 performances across 160 competitions, 4,408 team IDs, and 294 division IDs. Levels 1, 2, 3, 4, 4.2, 5, and 6 are included.
+This project uses published scoring data to examine those patterns.
 
-The primary unit is one team's performance within a competition, level, division, and round. Individual-round scores and published placement are analyzed separately because competition formats and cumulative scoring rules vary.
+The goal is to provide reference points coaches can use alongside their own knowledge of a team—not to prescribe a routine or promise that reaching a certain score will produce a win.
+
+The analysis covers:
+
+| Measure | Dataset scope |
+|---|---:|
+| Performances | 31,151 |
+| Competitions | 160 |
+| Team IDs | 4,408 |
+| Division IDs | 294 |
+| Levels | 1, 2, 3, 4, 4.2, 5, and 6 |
+
+A **performance** is one team's scored appearance in a particular competition, division, and round. A team appearing in Prelims and Finals contributes two performances.
 
 **Interactive Tableau dashboard:** planned. Benchmark datasets have been exported for dashboard development.
 
 ## Questions Examined
 
 - Which scoring categories consistently distinguish competitive placements?
-- How do recorded first-place rates vary as teams meet more score benchmarks?
-- How do those patterns differ by level and competitive field size?
+- How often do teams finish first when they meet more category benchmarks?
+- How do those patterns differ by level and field size?
 - Which scoring categories tend to move together?
-- How are deductions associated with outcomes and hypothetical score-based position?
-- How do the same team's scores change between rounds?
+- How are deductions associated with results?
+- How much do the same team's scores change between rounds?
 - Do changes in awarded pyramid difficulty coincide with changes in execution and deductions?
 
-## Data and Scoring Context
+## Understanding the Data
 
 The source data comes from publicly available Varsity TV competition results and PDF score breakdowns.
+
+### Scorecard Formats
 
 Two scorecard formats appear in the dataset:
 
@@ -33,19 +47,37 @@ Two scorecard formats appear in the dataset:
 | Standard scorecard | 50 | 23,232 |
 | No-toss scorecard | 46 | 7,919 |
 
-Raw scores from different formats are not directly comparable. Benchmark thresholds are calculated separately by level and scorecard format.
+A raw score of 45 does not mean the same thing on a 46-point sheet as it does on a 50-point sheet. Benchmark thresholds are therefore calculated separately by level and scorecard format.
 
-Many difficulty categories show limited variation within a level. The analysis therefore examines score distributions before interpreting category relationships. Zero recorded deductions also do not prove that every intended skill was completed.
+### Round Scores and Placement
 
-Placement analyses generally use fields of at least three teams. This leaves 21,980 eligible performances.
+An **individual-round score** describes a single performance. An **event score** may combine rounds according to the competition's scoring rules.
+
+Published placement and individual-round score order are not always interchangeable. A team can have a stronger individual round without necessarily finishing ahead in the overall event.
+
+This project identifies which outcome each comparison uses.
+
+A **competitive field** is the group of performances in the same competition, level, division, and round. Placement analyses generally include fields of at least three teams, leaving 21,980 eligible performances.
+
+### Difficulty, Execution, and Deductions
+
+Many difficulty categories have limited variation within a level. Meeting expected difficulty may be essential to competitiveness while offering little separation between teams that already receive similar difficulty scores.
+
+Execution and presentation categories can provide additional separation, but their scoring ranges differ. Raw point differences alone should not be treated as a universal ranking of coaching priorities.
+
+**Zero recorded deductions is not proof that every intended skill was completed.** A team may receive less awarded difficulty or execution without a recorded penalty.
 
 ## Findings
 
 ### 1. Meeting More Score Benchmarks Is Associated With More First-Place Finishes
 
-### 1. Meeting More Score Benchmarks Is Associated With More First-Place Finishes
+Benchmarks were calculated at the 75th and 90th percentiles of eligible training performances, separately by level and scorecard format. First-place rates were then measured in other competitions.
 
-Benchmarks were calculated at the 75th and 90th percentiles of training performances, separately by level and scorecard format. Their relationships with first-place finishes were evaluated on other competitions.
+A **75th-percentile target** is the score at the point where approximately three-quarters of the training scores fall at or below it. A 90th-percentile target is more selective.
+
+These are percentiles of the training field, not percentiles of winners alone.
+
+Because scores occur in discrete increments and teams can receive identical scores, meeting a 75th-percentile target does not necessarily put a performance in an exact top 25%.
 
 #### Level 3 Benchmark Targets — 50-Point Scorecard
 
@@ -58,21 +90,29 @@ Benchmarks were calculated at the 75th and 90th percentiles of training performa
 | Show | 1.83 | 1.87 |
 | Routine composition | 1.83 | 1.90 |
 
-A performance meets a benchmark when its category score is at or above the target. These are reference scores, not minimum requirements for winning. Scores occur in discrete increments, so the 75th and 90th percentiles can produce identical targets.
+A performance meets a benchmark when its category score is **at or above** the target. Each of the six categories contributes one to the benchmark count; categories are not weighted by their point value or model coefficient.
+
+The 75th and 90th percentile targets can be identical where the score distribution is concentrated at the same value.
+
+#### Pattern Across Levels
 
 ![Benchmark attainment across levels](reports/figures/benchmark_attainment_by_level.png)
 
-Within fields of three to seven teams, observed first-place rates increased across the groups meeting 0–2, 3–4, and 5–6 benchmarks for every main level/scorecard group shown.
+Within fields of three to seven teams, recorded first-place rates increased across the groups meeting 0–2, 3–4, and 5–6 benchmarks for every main level/scorecard group shown.
 
-These targets describe strong recorded score profiles. They are not minimum scores required to win, causal effects, or individual win probabilities.
+**What this means for coaches:** The useful pattern is strength across several execution and presentation categories. An excellent score in one category does not necessarily describe the overall strength of a performance.
+
+Coaches can compare their team's scores with the targets for the appropriate level and scorecard format, then investigate where the team consistently falls short.
+
+The analysis does not establish which practice change would improve those scores or whether every category deserves equal practice time.
 
 #### Level 3 Detail
 
 ![Level 3 benchmarks by field size](reports/figures/level3_benchmarks_by_field_size.png)
 
-For the 75th-percentile targets:
+For Level 3's 75th-percentile targets:
 
-| Benchmarks met | 3–4 team fields | 5–7 team fields |
+| Exact number of benchmarks met | First-place rate: 3–4 team fields | First-place rate: 5–7 team fields |
 |---:|---:|---:|
 | 0 | 9.3% (75 performances) | 1.5% (66) |
 | 1 | 12.8% (78) | 3.6% (56) |
@@ -82,11 +122,23 @@ For the 75th-percentile targets:
 | 5 | 55.6% (54) | 34.1% (41) |
 | 6 | 61.5% (39) | 73.1% (26) |
 
+Each row contains performances meeting **exactly** that many targets. The groups do not overlap.
+
 The progression persisted after excluding the event contributing the most Level 3 performances in large fields.
 
-Results for fields of eight or more teams require greater caution: one competition contributed 284 of 372 evaluation performances in that band. High-benchmark rates there were heavily concentrated in that event.
+**Why field size matters:** Finishing first among three teams is a different competitive outcome from finishing first among ten. Compare benchmark results within a relevant field size rather than treating the overall rate as a personal probability of winning.
 
-The 90th-percentile targets identify more selective groups, but some have very few performances or competitions.
+The 73.1% result in five-to-seven-team fields does not demonstrate that those fields are easier than three-to-four-team fields. The groups contain different teams, competitions, and score profiles.
+
+#### Coverage and Caution
+
+One competition supplied 284 of 372 Level 3 evaluation performances in fields of eight or more teams. Its contribution was even greater in several high-benchmark groups.
+
+Those large-field rates are therefore heavily influenced by one event.
+
+The 90th-percentile targets identify more selective groups, but some contain very few performances or competitions. Large percentages from small groups require particular caution.
+
+**Coaching takeaway:** Use these targets as score-sheet reference points. They are not minimum scores required to win, guaranteed outcomes, or estimates of what will happen after changing a routine.
 
 ### 2. Stunt Execution Shows Consistent Relationships With Placement Across Levels
 
@@ -94,7 +146,17 @@ The 90th-percentile targets identify more selective groups, but some have very f
 
 Stunt execution appeared among the five most negative average conditional placement coefficients at all seven levels. Pyramid difficulty appeared at six levels.
 
-The chart measures how consistently categories appeared among the strongest conditional relationships. It does not measure how much a team's placement would improve after increasing a particular score.
+A **conditional relationship** describes the association between a category and placement after accounting for the other categories included in the model.
+
+For these models, a more negative coefficient indicates an association with better normalized placement.
+
+The chart counts how often a category appeared among the five strongest such relationships. It does not measure the number of placements gained from a score increase.
+
+**What this means for coaches:** Stunt execution repeatedly distinguished stronger competitive performances across levels. It deserves attention when reviewing why otherwise competitive routines receive different scores.
+
+That does not mean stunt execution should always receive the most practice time. A team's existing weaknesses, routine content, and opportunities for improvement still matter.
+
+Correlated categories also share information. Their model coefficients should not be read as isolated judgments of each category's importance.
 
 ### 3. Related Categories Often Move Together
 
@@ -102,7 +164,7 @@ The chart measures how consistently categories appeared among the strongest cond
 
 Among eligible Level 3 zero-deduction performances, the strongest category-pair Spearman correlations were:
 
-| Category pair | Correlation |
+| Category pair | Spearman correlation |
 |---|---:|
 | Routine composition ↔ Show | 0.71 |
 | Pyramid difficulty ↔ Routine composition | 0.59 |
@@ -110,7 +172,21 @@ Among eligible Level 3 zero-deduction performances, the strongest category-pair 
 | Stunt execution ↔ Pyramid execution | 0.54 |
 | Pyramid difficulty ↔ Show | 0.50 |
 
-These associations help explain why categories can share information in multivariable models. They do not establish that improving one category causes another to improve, or that judges intentionally link the categories.
+**Spearman correlation** measures how consistently higher scores in one category accompany higher scores in another. It ranges from −1 to +1:
+
+- Positive values mean the categories tend to rise together.
+- Values near zero indicate little consistent monotonic relationship.
+- Negative values mean higher scores in one tend to accompany lower scores in the other.
+
+A correlation of 0.71 does not mean a 71% improvement or a 71% chance of receiving a particular score.
+
+**What this means for coaches:** Some score-sheet categories describe related aspects of a strong performance. For example, routine composition and show scores often move together.
+
+This can help coaches recognize broader score profiles instead of interpreting each category as an entirely separate issue.
+
+However, these correlations do not prove that improving routine composition causes show scores to improve. They may reflect shared performance quality, scorecard criteria, competition context, or other factors.
+
+They also do not establish that judges intentionally link the categories.
 
 ### 4. Larger Deductions Are Associated With Fewer First-Place Finishes
 
@@ -119,24 +195,46 @@ These associations help explain why categories can share information in multivar
 Among performances in fields of at least three teams:
 
 - 26.6% of deduction-free performances had recorded rank 1.
-- 15.7% of performances with 0.01–0.25 deductions had recorded rank 1.
+- 15.7% with 0.01–0.25 deductions had recorded rank 1.
 - Approximately 8.3% with 0.26–0.75 deductions had recorded rank 1.
 - 0.8% with more than 1.50 deductions had recorded rank 1.
 
-These comparisons involve different performances. A mistake may affect category scores as well as deductions, so the figures do not isolate the causal effect of a penalty.
+A **recorded first-place rate** is the percentage of performances in a group with published rank 1. Published results can contain ties, so it does not always represent a unique winner.
+
+**What this means for coaches:** Even relatively small deductions are associated with fewer first-place finishes. Larger deduction totals generally accompany weaker competitive outcomes.
+
+There is no demonstrated universal deduction cutoff beyond which a team cannot win.
 
 Teams can still finish first with deductions: of 882 recorded first-place performances with deductions, 586 competed against at least one deduction-free opponent.
+
+These comparisons involve different performances. They do not show what the same team would have scored or placed with a clean routine.
+
+#### The Point Value of a Deduction May Not Describe the Full Cost of a Mistake
+
+A performance error can potentially affect:
+
+- Awarded difficulty
+- Execution
+- Recorded deductions
+
+This analysis distinguishes the penalty recorded on the sheet from other score changes that may accompany the performance.
+
+Scorecards alone do not identify the complete cause or cost of a particular mistake.
 
 #### Deduction-Only Score Comparison
 
 ![Hypothetical deduction-only position impact](reports/figures/deduction_only_position_impact.png)
 
-Among 9,853 performances with deductions, removing only a team's own deductions while holding opponents' scores constant would allow:
+Among 9,853 performances with deductions, removing only a team's own deductions while holding opponents' recorded scores constant would allow:
 
 - 37.6% to pass at least one opponent.
 - Another 2.2% to reach a tie without passing an opponent.
 
-This is a hypothetical comparison of individual-round scores. It does not recalculate official competition placements or restore difficulty and execution points potentially lost through the same mistake.
+**What this comparison does:** It asks whether restoring the recorded penalty points alone would cross another team's individual-round score.
+
+**What it does not do:** It does not restore difficulty or execution points, simulate a clean routine, or recalculate official cumulative event placements.
+
+For coaches, it illustrates how penalties can matter in close score comparisons without claiming to reconstruct what would have happened.
 
 ### 5. Small Category Differences Separate the Top Round Scores
 
@@ -144,9 +242,17 @@ This is a hypothetical comparison of individual-round scores. It does not recalc
 
 Across 3,988 fields with distinct top-two individual-round scores, the median score margin was 0.717 points.
 
+The **median** is the middle observed margin: half the margins were at or below it and half were at or above it.
+
 The largest average raw category-point gaps included stunt execution, pyramid difficulty, pyramid execution, and running tumbling execution. Standing and running tumbling difficulty showed virtually no average gap.
 
-Raw category gaps describe score differences, rather than normalized importance or causal impact. This comparison uses individual-round scores, not published first and second place or cumulative event scores.
+**What this means for coaches:** When difficulty scores are similar, differences in execution and other score-sheet details can help separate the strongest round scores.
+
+Limited variation in a difficulty category does not mean that difficulty is unimportant. It may mean that the top performances already receive similar credit in that category.
+
+These comparisons use the two highest individual-round scores, not necessarily the published first- and second-place teams.
+
+Raw category-point gaps are descriptive differences. They are not normalized importance measures, estimates of return on practice time, or evidence that changing a category would reverse the result.
 
 ### 6. Most Matched Teams Scored Higher in Finals
 
@@ -154,14 +260,22 @@ Raw category gaps describe score differences, rather than normalized importance 
 
 Among 4,665 matched team–competition–division pairs with one Prelims and one Finals performance:
 
-- 70.4% scored higher in Finals.
-- The average individual-round score increased by 0.621 points.
-- Pre-deduction scores increased by an average of 0.549 points.
-- Deductions decreased by an average of 0.071 points.
+| Measure | Observed result |
+|---|---:|
+| Share scoring higher in Finals | 70.4% |
+| Average individual-round score change | +0.621 points |
+| Average pre-deduction score change | +0.549 points |
+| Average deduction change | −0.071 points |
 
-Only 34.6% had fewer deductions in Finals. Teams with unchanged deductions still had a median round-score increase of 0.507 points.
+A **matched comparison** follows the same team within the same event and division, rather than comparing unrelated teams.
 
-The observed improvement therefore involved changes in awarded scores as well as penalties. The data cannot establish whether routine changes, performance improvements, judging differences, or other factors caused those changes.
+Only 34.6% of matched pairs had fewer deductions in Finals. Teams with unchanged deductions still had a median round-score increase of 0.507 points.
+
+**What this means for coaches:** A higher Finals score is not necessarily explained by fewer penalties. Changes in awarded category scores also contribute.
+
+The observed average provides context for discussing round-to-round movement, but it should not be treated as an expected increase for every team.
+
+The data cannot establish whether routine changes, performance improvements, judging differences, or other factors caused the score changes.
 
 ### 7. Awarded Pyramid Difficulty Can Change Alongside Execution and Deductions
 
@@ -169,46 +283,99 @@ The observed improvement therefore involved changes in awarded scores as well as
 
 Among 217 Level 3 matched team–competition–division pairs whose awarded pyramid difficulty changed between two rounds:
 
-- The higher-difficulty round had higher pyramid execution in 68.7% of cases.
+- The higher-difficulty round also had higher pyramid execution in 68.7% of cases.
 - It had fewer routine-wide deductions in 82.0% of cases.
 - The pairs came from 51 competitions.
 
-After excluding the three most represented competitions, the pattern persisted among 160 pairs across 48 competitions: 65.6% had higher pyramid execution and 80.6% had fewer deductions in the higher-difficulty round.
+After excluding the three most represented competitions, the pattern persisted among 160 pairs across 48 competitions:
 
-Awarded difficulty describes the recorded performance, not necessarily the routine a team intended to perform. Scorecards alone cannot identify an omitted sequence, an intentional routine change, or the source of a deduction.
+- 65.6% had higher pyramid execution in the higher-difficulty round.
+- 80.6% had fewer deductions.
 
-## Analytical Approach
+This exclusion is a **sensitivity check**: it tests whether the result depends heavily on the largest contributors to the sample.
 
-The analysis includes:
+**What this means for coaches:** Awarded difficulty and execution may move together when the same team's performance changes. This is consistent with the possibility that a disrupted or incomplete sequence affects more than one part of the score sheet.
+
+However, **awarded difficulty describes the recorded performance, not necessarily the routine the team intended to perform**.
+
+The deductions analyzed here are routine-wide. They cannot be attributed specifically to the pyramid.
+
+The data does not identify omitted sequences, intentional routine adjustments, the reason a score changed, or the cause of a penalty.
+
+## Modeling and Validation
+
+The technical analysis includes:
 
 - Score-distribution and observed-ceiling checks by level.
-- Zero-deduction comparisons to examine categories separately from recorded penalties.
+- Zero-deduction comparisons.
 - Spearman correlations and category-gap comparisons.
-- Within-field standardized predictors and Ridge regression.
-- Nested competition-held-out validation and coefficient stability checks.
-- Separate deduction and field-size interaction models.
-- Percentile benchmarks derived from training competitions.
-- Event-coverage and dominant-event sensitivity checks.
-- Same-team comparisons within competition and division across rounds.
+- Within-field standardized predictors.
+- Ridge regression.
+- Nested competition-held-out validation.
+- Coefficient stability checks.
+- Deduction and field-size interaction models.
+- Training-derived percentile benchmarks.
+- Competition-coverage and sensitivity checks.
+- Same-team comparisons across rounds.
+
+### Within-Field Standardization
+
+Standardization expresses a category score relative to the other scores in its competitive field.
+
+This helps account for differences in scoring ranges and competitive context. A category with a larger raw scoring range should not automatically appear more informative solely because its numbers vary more.
+
+### Ridge Regression
+
+Ridge regression estimates relationships between several scoring categories and placement at the same time.
+
+Its regularization reduces instability when categories are correlated. This matters because strong teams often score well across multiple related categories.
+
+The coefficients describe conditional associations within the modeled data. They are not causal estimates or recommended practice allocations.
+
+### Competition-Held-Out Evaluation
+
+Competitions are separated between training and evaluation so that the same event does not appear on both sides of a split.
+
+This checks how well the patterns carry to other competitions rather than measuring only how well a model fits the data it learned from.
+
+Nested cross-validation also separates model tuning from outer evaluation.
+
+### Interpreting Model Performance
 
 Category-based models achieved mean held-out R² of approximately 0.57–0.64 for Levels 1–4. Performance was lower and more variable at higher levels, particularly Level 6.
 
-Because placement is derived from scoring, these models describe how recorded category scores distinguish outcomes within the scoring system. Predictive accuracy alone does not establish which coaching intervention would improve a team's results.
+**R²** measures how much variation in the modeled outcome is explained relative to a mean-prediction baseline. An R² of 0.60 does not mean the model correctly predicts 60% of winners.
+
+Because placement is derived from scoring, these models evaluate how recorded category scores distinguish competitive outcomes within the scoring system.
+
+Predictive accuracy alone does not establish which coaching intervention would improve results.
 
 Earlier benchmark exploration examined the full dataset. Subsequent competition-split checks provide evidence of robustness, but should not be presented as fully independent prospective validation.
 
 ## Limitations
 
-- Published rank can reflect competition-specific formats and may include ties.
-- Performances are repeated observations of teams and competitions, not independent teams.
-- Score-sheet formats and category applicability differ.
-- Some difficulty categories have little variation.
+- Competition formats vary, and published rank may include ties or cumulative scoring.
+- Performances are repeated observations of teams and competitions.
+- Scorecard formats and category applicability differ.
+- Some difficulty categories have little variation within a level.
 - Zero deductions do not guarantee completion of every intended skill.
 - Scores do not capture routine intent, video evidence, judge reasoning, or the cause of each penalty.
-- Small or event-concentrated benchmark groups limit generalization.
-- Field size affects first-place rates; pooled rates can also reflect differences in field composition.
+- Small and event-concentrated groups limit generalization.
+- Field size and field composition affect first-place rates.
 - Category correlations may reflect shared performance quality and competition context.
-- Regional scoring differences and individual judge behavior are not established by this analysis.
+- Observed associations do not establish the effects of changing a routine.
+- Regional scoring differences and individual judge behavior are not established by this project.
+
+## Using the Findings as a Coach
+
+1. Select the correct level and scorecard format.
+2. Compare category scores with the relevant benchmark targets.
+3. Look for recurring gaps across performances rather than reacting to one score sheet.
+4. Interpret competitive outcomes alongside field size and deductions.
+5. Use the findings to guide review of routines and performance footage.
+6. Apply coaching judgment when deciding what to change.
+
+The analysis provides context for those decisions. It does not replace score-sheet rules, video review, or knowledge of the athletes.
 
 ## Repository Workflow
 
@@ -223,21 +390,23 @@ The main analytical input is:
 
 Run `01` before `02` to generate the derived inputs used by the findings notebook.
 
-### Dashboard Exports
+### Dashboard and Analytical Exports
 
-- `tableau_benchmark_performances.csv`: 6,643 evaluation performances with level-specific 75th/90th-percentile benchmark counts.
-- `tableau_benchmark_thresholds.csv`: category thresholds by level, scorecard format, and percentile.
-- `category_pair_correlations.csv`: category-pair correlation results by level.
-- `prelims_finals_changes.csv`: matched Prelims-to-Finals score changes.
-- `pyramid_round_changes.csv`: matched Level 3 changes in awarded pyramid difficulty.
+| File | Contents |
+|---|---|
+| `tableau_benchmark_performances.csv` | 6,643 evaluation performances with level-specific 75th/90th-percentile benchmark counts |
+| `tableau_benchmark_thresholds.csv` | Category targets by level, scorecard format, and percentile |
+| `category_pair_correlations.csv` | Category-pair correlations by level |
+| `prelims_finals_changes.csv` | Matched Prelims-to-Finals score changes |
+| `pyramid_round_changes.csv` | Matched Level 3 changes in awarded pyramid difficulty |
 
-Static figures are saved under `reports/figures/`.
+Exports are saved under `data/processed/`. Static figures are saved under `reports/figures/`.
 
 ## Tools
 
 Python, pandas, NumPy, scikit-learn, statsmodels, and Matplotlib.
 
-Tableau will provide interactive exploration of the validated exports.
+Tableau will provide interactive exploration of the benchmark and analytical exports.
 
 ## Author
 
